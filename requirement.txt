@@ -1,0 +1,4 @@
+numpy
+gensim
+torch
+glove-python
