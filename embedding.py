@@ -1,4 +1,5 @@
-from gensim.models import Word2Vec
+from glove import Glove, Corpus
+from gensim.models import Word2Vec, FastText
 
 class SecWord2Vec(Word2Vec):
 
@@ -17,19 +18,48 @@ class SecWord2Vec(Word2Vec):
 			cbow_mean=cbow_mean, iter=iter, null_word=null_word, 
 			trim_rule=trim_rule, sorted_vocab=sorted_vocab, batch_words=batch_words, 
 			compute_loss=compute_loss, max_final_vocab=max_final_vocab)
-		
 
-	def train(
-		self, sentences=None, corpus_file=None, total_examples=None, 
-		total_words=None, epochs=None, start_alpha=None, end_alpha=None, 
-		word_count=0, queue_factor=2, report_delay=1.0, compute_loss=False):
+class SecFastText(FastText):
 
-		self.train(
+	def __init__(
+		self, sentences=None, corpus_file=None, 
+		sg=0, hs=0, size=100, alpha=0.025, 
+		window=5, min_count=5, max_vocab_size=None,
+		word_ngrams=1, sample=0.001, seed=1, 
+		workers=3, min_alpha=0.0001, negative=5, 
+		ns_exponent=0.75, cbow_mean=1, iter=5, 
+		null_word=0, min_n=3, max_n=6, sorted_vocab=1, 
+		bucket=2000000, trim_rule=None, batch_words=10000):
+
+
+		super().__init__(
 			sentences=sentences, corpus_file=corpus_file, 
-			total_examples=total_examples, total_words=total_words, 
-			epochs=epochs, start_alpha=start_alpha, 
-			end_alpha=end_alpha, word_count=word_count, 
-			queue_factor=queue_factor, report_delay=report_delay, 
-			compute_loss=compute_loss)
+			sg=sg, hs=hs, size=size, alpha=alpha, 
+			window=window, min_count=min_count, max_vocab_size=max_vocab_size,
+			word_ngrams=word_ngrams, sample=sample, seed=seed, 
+			workers=workers, min_alpha=min_alpha, negative=negative, 
+			ns_exponent=ns_exponent, cbow_mean=cbow_mean, iter=iter, 
+			null_word=null_word, min_n=min_n, max_n=max_n, sorted_vocab=sorted_vocab, 
+			bucket=bucket, trim_rule=trim_rule, batch_words=batch_words)
+
+
 
 	
+
+class SecGloVe(Glove):
+
+	pass
+
+	# def train(
+	# 	self, sentences=None, corpus_file=None, total_examples=None, 
+	# 	total_words=None, epochs=None, start_alpha=None, end_alpha=None, 
+	# 	word_count=0, queue_factor=2, report_delay=1.0, compute_loss=False):
+
+	# 	self.train(
+	# 		sentences=sentences, corpus_file=corpus_file, 
+	# 		total_examples=total_examples, total_words=total_words, 
+	# 		epochs=epochs, start_alpha=start_alpha, 
+	# 		end_alpha=end_alpha, word_count=word_count, 
+	# 		queue_factor=queue_factor, report_delay=report_delay, 
+	# 		compute_loss=compute_loss)
+
