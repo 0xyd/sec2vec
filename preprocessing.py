@@ -1,5 +1,44 @@
 # -*- coding: utf-8 -*-
 import re
+from flashtext import KeywordProcessor
+
+class KeywordCorpus(dict):
+    
+    def __setitem__(self, keyword, corpus):
+        super().__setitem__(keyword, corpus)
+
+    def __getitem__(self, keyword):
+        return super().get(keyword, f'Corpus of Keyword {keyword} does not exist.')
+
+class KeywordCorpusFactory(KeywordProcessor):
+
+    def __init__(self, case_sensitive=False):
+        super().__init__(case_sensitive=case_sensitive)
+        self.keyword_corpus = KeywordCorpus()
+        # self._keyword_corpus = KeywordCorpus()
+
+    def create_keyword_corpus(self, keyword, sentences):
+
+        self.add_keyword(keyword, '')
+
+        for s in sentences:
+            print(self.replace_keywords(s))
+
+        self.keyword_corpus[keyword] = \
+            list(self.replace_keywords(sentence).split(' ') for sentence in sentences)
+        
+    # @property
+    # def keyword_corpus(self, keyword):
+    #     return self._keyword_corpus[keyword]
+    
+    # @keyword_corpus.setter
+    # def keyword_corpus(self, keyword, corpus):
+
+    #     if keyword in self._keyword_corpus:
+    #         self._keyword_corpus[keyword].extend(corpus)
+    #     else:
+    #         self._keyword_corpus[keyword] = corpus
+        
 
 def clean_keyword_in_sentence(keyword, sentence):
     '''
