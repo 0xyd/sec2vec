@@ -15,29 +15,21 @@ class KeywordCorpusFactory(KeywordProcessor):
     def __init__(self, case_sensitive=False):
         super().__init__(case_sensitive=case_sensitive)
         self.keyword_corpus = KeywordCorpus()
-        # self._keyword_corpus = KeywordCorpus()
 
     def create_keyword_corpus(self, keyword, sentences):
 
-        self.add_keyword(keyword, '')
+        self.add_keyword(keyword, ' ')
 
-        for s in sentences:
-            print(self.replace_keywords(s))
+        self.keyword_corpus[keyword] = list(
+            list(
+                filter(
+                    lambda s: s if len(s) > 0 else None, 
+                    self.replace_keywords(sentence).split(' '))) for sentence in sentences)
 
-        self.keyword_corpus[keyword] = \
-            list(self.replace_keywords(sentence).split(' ') for sentence in sentences)
+
+    def create_keyword_corpus_from_file(self, keyword, file_path):
         
-    # @property
-    # def keyword_corpus(self, keyword):
-    #     return self._keyword_corpus[keyword]
-    
-    # @keyword_corpus.setter
-    # def keyword_corpus(self, keyword, corpus):
-
-    #     if keyword in self._keyword_corpus:
-    #         self._keyword_corpus[keyword].extend(corpus)
-    #     else:
-    #         self._keyword_corpus[keyword] = corpus
+        pass
         
 
 def clean_keyword_in_sentence(keyword, sentence):
