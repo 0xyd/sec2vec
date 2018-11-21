@@ -1,6 +1,21 @@
 from glove import Glove, Corpus
 from gensim.models import Word2Vec, FastText
 
+from preprocessing import KeywordCorpusFactory
+
+class KeywordCorpusFactoryWord2VecMixin(Word2Vec, KeywordCorpusFactory): 
+
+	def __init__(self):
+		pass
+
+	
+
+class KeywordCorpusFactoryFattextMixin(FastText, KeywordCorpusFactory): 
+
+	def __init__(self):
+		pass
+
+
 class SecWord2Vec(Word2Vec):
 
 	def __init__(
