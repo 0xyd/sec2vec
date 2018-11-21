@@ -5,21 +5,39 @@ from preprocessing import KeywordCorpusFactory
 
 class KeywordCorpusFactoryWord2VecMixin(Word2Vec, KeywordCorpusFactory): 
 
-	def __init__(self):
+	def __init__(
+		self, keywords, sentences, corpus_worker=3, chunksize=256, case_sensitive=False, 
+		corpus_file=None, size=100, alpha=0.025, 
+		window=5, min_count=5, max_vocab_size=None, 
+		sample=0.001, seed=1, workers=3, 
+		min_alpha=0.0001, sg=0, hs=0, 
+		negative=5, ns_exponent=0.75, cbow_mean=1, 
+		iter=5, null_word=0, trim_rule=None, 
+		sorted_vocab=1, batch_words=10000, compute_loss=False, 
+		max_final_vocab=None):
+
+
+		KeywordCorpusFactory.__init__(keywords, case_sensitive)
+
+
+
+		# Word2Vec.__init__(self, )
+
+
 		pass
 
-	
+
 
 class KeywordCorpusFactoryFattextMixin(FastText, KeywordCorpusFactory): 
 
-	def __init__(self):
+	def __init__(self, keywords, sentences):
 		pass
 
 
 class SecWord2Vec(Word2Vec):
 
 	def __init__(
-		self, sentences=None, corpus_file=None, size=100, alpha=0.025, window=5, 
+		self, sentences, corpus_file=None, size=100, alpha=0.025, window=5, 
 		min_count=5, max_vocab_size=None, sample=0.001, seed=1, workers=3, min_alpha=0.0001, 
 		sg=0, hs=0, negative=5, ns_exponent=0.75, cbow_mean=1, iter=5, null_word=0, 
 		trim_rule=None, sorted_vocab=1, batch_words=10000, compute_loss=False, max_final_vocab=None):
