@@ -50,7 +50,6 @@ class KeywordCorpusFactory():
 		for keyword in keywords:
 			self.keyword_corpus[keyword] = []
 
-
 	def create(self, sentences, chunksize=256, corpus_worker=3):
 
 		sentences_chunk = []
@@ -95,4 +94,18 @@ class KeywordCorpusFactory():
 				self.keyword_corpus[keyword].append(tokens)
 
 		return self.keyword_corpus
+
+
+	def update_keywords(self, keywords):
+
+		for keyword in keywords:
+			if keyword in self.keyword_corpus:
+				raise ValueError("Keyword {} is exist already".format(keyword))
+			else:
+				self.keyword_corpus[keyword] = []
+
+	def update(self, sentences, chunksize=256, corpus_worker=3):
+		
+		pass
+
 
