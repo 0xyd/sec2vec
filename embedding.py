@@ -1,3 +1,5 @@
+from itertools import cycle
+from collections import Iterator
 from multiprocessing import cpu_count
 
 import numpy as np
@@ -10,6 +12,24 @@ from preprocessing import KeywordCorpusIterator
 
 
 epoch_logger = EpochLogger()
+
+class SentenceIterator():
+
+	def __init__(self, sentences): self.iterable = (s for s in sentences)
+
+	def __iter__(self): return self
+
+	def __next__(self):
+
+		s = next(self.iterable)
+
+		if isinstance(s, list):
+			return s
+		elif isinstance(s, str):
+			return s.split(' ')
+		else:
+			return ValueError(
+				'Only String or list of string are acceptable.')
 
 class KeywordCorpusFactoryWord2VecMixin(Word2Vec, KeywordCorpusFactory): 
 
@@ -25,10 +45,9 @@ class KeywordCorpusFactoryWord2VecMixin(Word2Vec, KeywordCorpusFactory):
 		sorted_vocab, batch_words, compute_loss, 
 		max_final_vocab):
 		
-		KeywordCorpusFactory.__init__(self, keywords, case_sensitive)
-		self.kc = self.create(sentences, corpus_chunksize, corpus_worker)
+		KeywordCorpusFactory.__init__(self, keywords, case_sensitive, corpus_worker)
+		self.kc = self.create(sentences, corpus_chunksize)
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
-		self.corpus_worker = corpus_worker
 		self.corpus_chunksize = corpus_chunksize
 		
 		Word2Vec.__init__(
@@ -44,7 +63,11 @@ class KeywordCorpusFactoryWord2VecMixin(Word2Vec, KeywordCorpusFactory):
 			callbacks=[epoch_logger])
 
 	def __getitem__(self, word):
-		return self.wv[word]
+
+		try:
+			return self.wv[word]
+		except:
+			return ValueError('{} does not exist.'.format(word))
 		
 
 class KeywordCorpusFactoryFasttextMixin(FastText, KeywordCorpusFactory): 
@@ -63,7 +86,7 @@ class KeywordCorpusFactoryFasttextMixin(FastText, KeywordCorpusFactory):
 		KeywordCorpusFactory.__init__(self, keywords, case_sensitive)
 		self.kc = self.create(sentences, corpus_chunksize, corpus_worker)
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
-		self.corpus_worker = corpus_worker
+		# self.corpus_worker = corpus_worker
 		self.corpus_chunksize = corpus_chunksize
 
 		FastText.__init__(self, 
@@ -105,10 +128,7 @@ class SecWord2Vec(KeywordCorpusFactoryWord2VecMixin):
 			batch_words, compute_loss, max_final_vocab)
 
 		self.build_vocab(
-			(token for tokens in KeywordCorpusIterator(self.kc) 
-				for token in tokens))
-
-
+			(corpus for corpus in KeywordCorpusIterator(self.kc)))
 
 	def _get_vec(self, token):
 
@@ -119,25 +139,23 @@ class SecWord2Vec(KeywordCorpusFactoryWord2VecMixin):
 
 	def _cal_kv(self):
 
-		for keyword, tokens_collection in self.kc.items():
+		for keyword, sentences in self.kc.items():
 
 			kv = None
-			word_count = 0
+			token_count = 0
 
-			for tokens_list in tokens_collection:
+			for sentence in sentences:
 
-				for tokens in tokens_list:
+				for token in sentence.split(' '):
 
-					for token in tokens:
+					if token_count: 
+						kv = kv + self._get_vec(token)
+					else:
+						kv = self._get_vec(token)
 
-						if word_count: 
-							kv = kv + self._get_vec(token)
-						else:
-							kv = self._get_vec(token)
+					token_count += 1
 
-						word_count += 1
-
-				kv = kv / word_count
+				kv = kv / token_count
 				self.kv[keyword] = kv
 
 	def train_embed(
@@ -151,25 +169,21 @@ class SecWord2Vec(KeywordCorpusFactoryWord2VecMixin):
 
 		if update:
 
-			self.build_vocab(sentences, update=update)
+			if isinstance(sentences, Iterator):
+				raise ValueError(
+					'sentences accpets list of str or list of tokens only.')
 
-			# TODO: Update new keyword and its new corpus
-			# if keywords:
-			# 	for keyword in keywords:
-			# 		if keyword not in 
-
-			# update_keyword_corpus = self.create()
-
+			self.build_vocab(SentenceIterator(sentences), update=update)
+			self.update(keywords, SentenceIterator(sentences))
 			self.train(
-				sentences, corpus_file, 
+				SentenceIterator(sentences), corpus_file, 
 				total_examples, total_words, epochs, 
 				start_alpha, end_alpha, word_count, 
 				queue_factor, report_delay, compute_loss)
 		else:
 
 			self.train(
-				(token for tokens in KeywordCorpusIterator(self.kc)
-					for token in tokens), 
+				KeywordCorpusIterator(self.kc), 
 				corpus_file, total_examples, total_words, epochs, 
 				start_alpha, end_alpha, word_count, 
 				queue_factor, report_delay, compute_loss)
