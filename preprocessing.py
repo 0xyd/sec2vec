@@ -40,6 +40,20 @@ class KeywordCorpus(dict):
 	def __getitem__(self, keyword):
 		return super().get(keyword, f'Corpus of Keyword {keyword} does not exist.')
 
+
+class KeywordCorpusIterator():
+
+	def __init__(self, keyword_corpus):
+		self.iterable = (tokens for corpus in  keyword_corpus.values for tokens in corpus)
+
+	def __iter__(self): return self
+
+	def __next__(self):
+		try:
+			return next(self.iterable)
+		except:
+			raise StopIteration
+
 class KeywordCorpusFactory():
 
 	def __init__(self, keywords, case_sensitive=False):
