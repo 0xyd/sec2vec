@@ -15,7 +15,7 @@ class KeywordCorpusFactoryWord2VecMixin(Word2Vec, KeywordCorpusFactory):
 
 	def __init__(
 		self, keywords, sentences, 
-		corpus_worker, chunksize, case_sensitive, 
+		corpus_worker, corpus_chunksize, case_sensitive, 
 		corpus_file, size, alpha, 
 		window, min_count, max_vocab_size, 
 		sample, seed, workers, 
@@ -26,7 +26,7 @@ class KeywordCorpusFactoryWord2VecMixin(Word2Vec, KeywordCorpusFactory):
 		max_final_vocab):
 		
 		KeywordCorpusFactory.__init__(self, keywords, case_sensitive)
-		self.kc = self.create(sentences, chunksize, corpus_worker)
+		self.kc = self.create(sentences, corpus_chunksize, corpus_worker)
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
 		self.corpus_worker = corpus_worker
 		self.corpus_chunksize = corpus_chunksize
@@ -108,6 +108,8 @@ class SecWord2Vec(KeywordCorpusFactoryWord2VecMixin):
 			(token for tokens in KeywordCorpusIterator(self.kc) 
 				for token in tokens))
 
+
+
 	def _get_vec(self, token):
 
 		if token in self.wv:
@@ -117,20 +119,25 @@ class SecWord2Vec(KeywordCorpusFactoryWord2VecMixin):
 
 	def _cal_kv(self):
 
-		for keyword, tokens_list in self.kc.items():
+		for keyword, tokens_collection in self.kc.items():
 
-			for tokens in tokens_list:
+			kv = None
+			word_count = 0
 
-				kv = None
+			for tokens_list in tokens_collection:
 
-				for i, token in enumerate(tokens):
+				for tokens in tokens_list:
 
-					if i: 
-						kv += self._get_vec(token)
-					else:
-						kv = self._get_vec(token)
+					for token in tokens:
 
-				kv /= (i+1)
+						if word_count: 
+							kv = kv + self._get_vec(token)
+						else:
+							kv = self._get_vec(token)
+
+						word_count += 1
+
+				kv = kv / word_count
 				self.kv[keyword] = kv
 
 	def train_embed(
@@ -166,6 +173,8 @@ class SecWord2Vec(KeywordCorpusFactoryWord2VecMixin):
 				corpus_file, total_examples, total_words, epochs, 
 				start_alpha, end_alpha, word_count, 
 				queue_factor, report_delay, compute_loss)
+
+			self.wv['unk'] = np.random.uniform(-1, 1, (self.vector_size,))
 
 		self._cal_kv()
 
@@ -224,8 +233,7 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 				corpus_file, 
 				total_examples, total_words, epochs, 
 				start_alpha, end_alpha, word_count, 
-				queue_factor, report_delay, compute_loss
-			)
+				queue_factor, report_delay, compute_loss)
 
 class SecGloVe(Glove):
 
