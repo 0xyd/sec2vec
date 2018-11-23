@@ -148,6 +148,9 @@ class SecWord2Vec(KeywordCorpusFactoryWord2VecMixin):
 
 				for token in sentence.split(' '):
 
+					if token == keyword:
+						continue
+
 					if token_count: 
 						kv = kv + self._get_vec(token)
 					else:
