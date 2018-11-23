@@ -77,19 +77,19 @@ class KeywordCorpusFactory():
 
 	def __init__(self, keywords, case_sensitive=False, worker=3):
 
-		self.keyword_corpus = KeywordCorpus()
+		self.kc = KeywordCorpus()
 		self.case_sensitive = case_sensitive
-		self.worker = worker
+		self.corpus_worker = worker
 
 		for keyword in keywords:
-			self.keyword_corpus[keyword] = set()
-			# self.keyword_corpus[keyword] = []
+			self.kc[keyword] = set()
+			# self.kc[keyword] = []
 
 	def _create(self, keywords, sentences, chunksize=256):
 
 		sentences_chunk = []
-		partition_size = chunksize // self.worker
-		corpus_pool = Pool(self.worker)
+		partition_size = chunksize // self.corpus_worker
+		corpus_pool = Pool(self.corpus_worker)
 
 		for i, sentence in enumerate(sentences):
 
@@ -97,9 +97,9 @@ class KeywordCorpusFactory():
 
 				partitions = []
 
-				for i in range(self.worker):
+				for i in range(self.corpus_worker):
 
-					if i == self.worker-1:
+					if i == self.corpus_worker-1:
 						partitions.append(
 							sentences_chunk[i*partition_size:])
 					else:
@@ -112,12 +112,12 @@ class KeywordCorpusFactory():
 
 				for new_corpus in new_corpus_list:
 					for keyword, sentences in new_corpus.items():
-						self.keyword_corpus[keyword] = \
-							self.keyword_corpus[keyword].union(sentences)
+						self.kc[keyword] = \
+							self.kc[keyword].union(sentences)
 
 					# for keyword, tokens in new_corpus.items():
-					# 	self.keyword_corpus[keyword].extend(tokens)
-						# self.keyword_corpus[keyword].append(tokens)
+					# 	self.kc[keyword].extend(tokens)
+						# self.kc[keyword].append(tokens)
 
 				sentences_chunk = []
 
@@ -130,17 +130,17 @@ class KeywordCorpusFactory():
 
 			new_corpus = mp_extract_keywords(keywords, sentences_chunk)
 			for keyword, sentences in new_corpus.items():
-				self.keyword_corpus[keyword] = \
-					self.keyword_corpus[keyword].union(sentences)
+				self.kc[keyword] = \
+					self.kc[keyword].union(sentences)
 
-				# self.keyword_corpus[keyword].extend(tokens)
-				# self.keyword_corpus[keyword].append(tokens)
+				# self.kc[keyword].extend(tokens)
+				# self.kc[keyword].append(tokens)
 
 	def create(self, sentences, chunksize=256):
 
-		keywords = list(self.keyword_corpus.keys())
+		keywords = list(self.kc.keys())
 		self._create(keywords, sentences, chunksize=256)
-		return self.keyword_corpus
+		return self.kc
 
 		# for i, sentence in enumerate(sentences):
 
@@ -148,9 +148,9 @@ class KeywordCorpusFactory():
 
 		# 		partitions = []
 
-		# 		for i in range(self.worker):
+		# 		for i in range(self.corpus_worker):
 
-		# 			if i == self.worker-1:
+		# 			if i == self.corpus_worker-1:
 		# 				partitions.append(
 		# 					sentences_chunk[i*partition_size:])
 		# 			else:
@@ -163,7 +163,7 @@ class KeywordCorpusFactory():
 
 		# 		for new_corpus in new_corpus_list:
 		# 			for keyword, tokens in new_corpus.items():
-		# 				self.keyword_corpus[keyword].append(tokens)
+		# 				self.kc[keyword].append(tokens)
 
 		# 		sentences_chunk = []
 
@@ -176,18 +176,18 @@ class KeywordCorpusFactory():
 
 		# 	new_corpus = mp_extract_keywords(keywords, sentences_chunk)
 		# 	for keyword, tokens in new_corpus.items():
-		# 		self.keyword_corpus[keyword].append(tokens)
+		# 		self.kc[keyword].append(tokens)
 
-		# return self.keyword_corpus
+		# return self.kc
 
 
 	# def update_keywords(self, keywords):
 
 	# 	for keyword in keywords:
-	# 		if keyword in self.keyword_corpus:
+	# 		if keyword in self.kc:
 	# 			raise ValueError("Keyword {} is exist already".format(keyword))
 	# 		else:
-	# 			self.keyword_corpus[keyword] = []
+	# 			self.kc[keyword] = []
 
 	def update(self, keywords=None, sentences=None, chunksize=256):
 
@@ -199,14 +199,14 @@ class KeywordCorpusFactory():
 
 		if keywords:
 			for keyword in keywords:
-				if keyword in self.keyword_corpus:
+				if keyword in self.kc:
 					raise ValueError("Keyword {} is exist already".format(keyword))
 				else:
-					self.keyword_corpus[keyword] = set()
+					self.kc[keyword] = set()
 
 			# Retrieve old tokens and assemble them to sentences.
 			sentences_gen = (
-				sentences for corpus in self.keyword_corpus.values() 
+				sentences for corpus in self.kc.values() 
 					for sentences in corpus)
 			
 			self._create(keywords, sentences_gen, chunksize)
