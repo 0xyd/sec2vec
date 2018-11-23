@@ -56,8 +56,14 @@ class KeywordCorpus(dict):
 
 class KeywordCorpusIterator():
 
-	def __init__(self, keyword_corpus):
-		self.iterable = (tokens for corpus in  keyword_corpus.values for tokens in corpus)
+	def __init__(self, keyword_corpus, return_tokens=True):
+
+		if return_tokens:
+			self.iterable = (
+				sentence.split(' ') for corpus in keyword_corpus.values() for sentence in corpus)
+		else:
+			self.iterable = (
+				sentence for corpus in keyword_corpus.values() for sentence in corpus)
 
 	def __iter__(self): return self
 
@@ -135,7 +141,7 @@ class KeywordCorpusFactory():
 		keywords = list(self.keyword_corpus.keys())
 		self._create(keywords, sentences, chunksize=256)
 		return self.keyword_corpus
-		
+
 		# for i, sentence in enumerate(sentences):
 
 		# 	if i % (chunksize-1) == 0 and i > 0:

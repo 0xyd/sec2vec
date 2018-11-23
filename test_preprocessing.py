@@ -1,4 +1,6 @@
-from preprocessing  import KeywordCorpus, KeywordCorpusFactory
+from preprocessing import KeywordCorpus
+from preprocessing import KeywordCorpusFactory
+from preprocessing import KeywordCorpusIterator
 from test_embedding import WiKiCorpusIterator
 
 class TestKeywordCorpus():
@@ -11,6 +13,34 @@ class TestKeywordCorpus():
 		kc = KeywordCorpus()
 		kc['test'] = 'is good'
 		assert kc['test'] == 'is good'
+
+class TestKeywordCorpusIterator():
+
+	def test_init(self):
+
+		kc = KeywordCorpus()
+		kc['test'] = set(['test is good', 'test is nice'])
+		kc_iter = KeywordCorpusIterator(kc)
+
+		count_token = 0
+		for tokens in kc_iter:
+			if not isinstance(tokens, list):
+				assert False
+			count_token += 1
+
+		if count_token != 2:
+			assert False
+
+		count_token = 0
+		kc_iter = KeywordCorpusIterator(kc, False)
+
+		for tokens in kc_iter:
+			if not isinstance(tokens, str):
+				assert False
+			count_token += 1
+
+		if count_token != 2:
+			assert False
 
 class TestKeywordCorpusFactory():
 
