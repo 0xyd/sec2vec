@@ -1,4 +1,3 @@
-from itertools import cycle
 from collections import Iterator
 from multiprocessing import cpu_count
 
