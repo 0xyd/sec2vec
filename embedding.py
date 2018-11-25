@@ -1,4 +1,3 @@
-from itertools import cycle
 from collections import Iterator
 from multiprocessing import cpu_count
 
@@ -53,8 +52,8 @@ class Sec2Vec():
 
 		for keyword, sentences in self.kc.items():
 
-			kv = None
-			token_count = 0
+			kv = np.zeros((self.vector_size, ))
+			token_count = self.keyword_count[keyword] if self.keyword_count[keyword] else 0
 
 			for sentence in sentences:
 
@@ -71,7 +70,44 @@ class Sec2Vec():
 					token_count += 1
 
 				kv = kv / token_count
+
 				self.kv[keyword] = kv
+				self.keyword_count[keyword] += token_count
+
+	def train_embed(
+		self, keywords=None, sentences=None, corpus_file=None, update=False,
+		total_examples=None, total_words=None,  epochs=None, 
+		start_alpha=None, end_alpha=None, word_count=0, 
+		queue_factor=2, report_delay=1.0, compute_loss=False):
+
+		epochs = epochs if epochs else self.epochs
+		total_examples = total_examples if total_examples else self.corpus_count
+
+		if update:
+
+			if isinstance(sentences, Iterator):
+				raise ValueError(
+					'sentences accpets list of str or list of tokens only.')
+
+			self.build_vocab(SentenceIterator(sentences), update=update)
+			self.update(keywords, SentenceIterator(sentences))
+			self.train(
+				SentenceIterator(sentences), corpus_file, 
+				total_examples, total_words, epochs, 
+				start_alpha, end_alpha, word_count, 
+				queue_factor, report_delay, compute_loss)
+		else:
+
+			self.train(
+				KeywordCorpusIterator(self.kc), 
+				corpus_file, total_examples, total_words, epochs, 
+				start_alpha, end_alpha, word_count, 
+				queue_factor, report_delay, compute_loss)
+			self.wv['unk'] = np.random.uniform(-1, 1, (self.vector_size,))
+
+		self._cal_kv()
+
+
 
 class KeywordCorpusFactoryWord2VecMixin(Sec2Vec, Word2Vec, KeywordCorpusFactory): 
 
@@ -90,6 +126,7 @@ class KeywordCorpusFactoryWord2VecMixin(Sec2Vec, Word2Vec, KeywordCorpusFactory)
 		KeywordCorpusFactory.__init__(self, keywords, case_sensitive, corpus_worker)
 		self.kc = self.create(sentences, corpus_chunksize)
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
+		self.keyword_count = dict(((keyword, 0) for keyword in self.kc.keys()))
 		self.corpus_chunksize = corpus_chunksize
 		
 		Word2Vec.__init__(
@@ -162,41 +199,6 @@ class SecWord2Vec(KeywordCorpusFactoryWord2VecMixin):
 		self.build_vocab(
 			(corpus for corpus in KeywordCorpusIterator(self.kc)))
 
-	def train_embed(
-		self, keywords=None, sentences=None, corpus_file=None, update=False,
-		total_examples=None, total_words=None,  epochs=None, 
-		start_alpha=None, end_alpha=None, word_count=0, 
-		queue_factor=2, report_delay=1.0, compute_loss=False):
-
-		epochs = epochs if epochs else self.epochs
-		total_examples = total_examples if total_examples else self.corpus_count
-
-		if update:
-
-			if isinstance(sentences, Iterator):
-				raise ValueError(
-					'sentences accpets list of str or list of tokens only.')
-
-			self.build_vocab(SentenceIterator(sentences), update=update)
-			self.update(keywords, SentenceIterator(sentences))
-			self.train(
-				SentenceIterator(sentences), corpus_file, 
-				total_examples, total_words, epochs, 
-				start_alpha, end_alpha, word_count, 
-				queue_factor, report_delay, compute_loss)
-		else:
-
-			self.train(
-				KeywordCorpusIterator(self.kc), 
-				corpus_file, total_examples, total_words, epochs, 
-				start_alpha, end_alpha, word_count, 
-				queue_factor, report_delay, compute_loss)
-
-			self.wv['unk'] = np.random.uniform(-1, 1, (self.vector_size,))
-
-		self._cal_kv()
-
-
 class SecFastText(KeywordCorpusFactoryFasttextMixin):
 
 	def __init__(
@@ -221,52 +223,11 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 			bucket=bucket, trim_rule=trim_rule, batch_words=batch_words)
 
 		self.build_vocab(
-			(token for tokens in KeywordCorpusIterator(self.kc) 
-				for token in tokens))
+			(corpus for corpus in KeywordCorpusIterator(self.kc)))
 
-
-	def train_embed(
-		self, sentences=None, corpus_file=None, update=False,
-		total_examples=None, total_words=None,  epochs=None, 
-		start_alpha=None, end_alpha=None, word_count=0, 
-		queue_factor=2, report_delay=1.0):
-
-		epochs = epochs if epochs else self.epochs
-		total_examples = total_examples if total_examples else self.corpus_count
-
-		if update:
-
-			self.build_vocab(sentences, update=update)
-			self.train(
-				sentences, corpus_file, 
-				total_examples, total_words, epochs, 
-				start_alpha, end_alpha, word_count, 
-				queue_factor, report_delay, compute_loss)
-
-		else:
-
-			self.train(
-				(token for tokens in KeywordCorpusIterator(self.kc)
-					for token in tokens),
-				corpus_file, 
-				total_examples, total_words, epochs, 
-				start_alpha, end_alpha, word_count, 
-				queue_factor, report_delay, compute_loss)
 
 class SecGloVe(Glove):
 
 	pass
 
-	# def train(
-	# 	self, sentences=None, corpus_file=None, total_examples=None, 
-	# 	total_words=None, epochs=None, start_alpha=None, end_alpha=None, 
-	# 	word_count=0, queue_factor=2, report_delay=1.0, compute_loss=False):
-
-	# 	self.train(
-	# 		sentences=sentences, corpus_file=corpus_file, 
-	# 		total_examples=total_examples, total_words=total_words, 
-	# 		epochs=epochs, start_alpha=start_alpha, 
-	# 		end_alpha=end_alpha, word_count=word_count, 
-	# 		queue_factor=queue_factor, report_delay=report_delay, 
-	# 		compute_loss=compute_loss)
 
