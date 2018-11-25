@@ -19,7 +19,8 @@ sample_sentences = [
 
 wiki_keywords = [
 	'anarchism', 'philosophy', 'autism', 'communication', 'autistic', 
-	'family', 'studies', 'important', 'earth', 'incident'
+	'family', 'studies', 'important', 'earth', 'incident',
+	'is'
 ]
 
 class WiKiCorpusIterator():
@@ -77,6 +78,9 @@ class TestSecWord2Vec():
 
 		assert w2v.kc is not None
 		assert w2v['the'] is not None
+		assert w2v.kc['is'] is not None
+
+		old_is_vec = w2v.kc['is']
 
 		for keyword in wiki_keywords:
 			assert w2v.kv[keyword].shape[0] == 10
@@ -115,6 +119,8 @@ class TestSecWord2Vec():
 				['This is a hello world example again']],
 			update=True)
 
+		assert not np.array_equal(old_is_vec, w2v.kv['is'])
+
 		# TODO: Test 
 		# with pytest.raises(
 		# 	ValueError, match='This is a hello world example. does not exist.'):
@@ -122,33 +128,22 @@ class TestSecWord2Vec():
 
 		del w2v; gc.collect()
 
-		# update with new keywords
 
+class TestSecFastTest():
 
+	def test_init(self):
 
-	# def test_train(self):
+		fasttext = SecFastText()
+		assert True
 
-	# 	wc = WiKiCorpusIterator(100)
-	# 	w2v = SecWord2Vec(wc)
-	# 	w2v.train(wc)
+		wc = WiKiCorpusIterator(100)
+		ft = SecFastText(wc)
+		assert ft['the'] is not None
+		assert ft['is'] is not None
+		del ft; gc.collect()
 
-	# 	assert w2v.wv['the'] is not None
-	# 	assert w2v.wv['is'] is not None
-	# 	del w2v; gc.collect()
-
-
-# class TestSecFastTest():
-
-# 	def test_init(self):
-
-# 		fasttext = SecFastText()
-# 		assert True
-
-# 		wc = WiKiCorpusIterator(100)
-# 		ft = SecFastText(wc)
-# 		assert ft.wv['the'] is not None
-# 		assert ft.wv['is'] is not None
-# 		del ft; gc.collect()
+	def test_train(self):
+		pass
 
 	# def test_train(self):
 
