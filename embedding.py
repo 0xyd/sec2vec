@@ -259,8 +259,11 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 			bucket=bucket, trim_rule=trim_rule, batch_words=batch_words)
 
 		self.build_vocab(
-			(token for tokens in KeywordCorpusIterator(self.kc) 
-				for token in tokens))
+			(corpus for corpus in KeywordCorpusIterator(self.kc)))
+		
+		# self.build_vocab(
+		# 	(token for tokens in KeywordCorpusIterator(self.kc) 
+		# 		for token in tokens))
 
 
 	# def train_embed(
