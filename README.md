@@ -7,6 +7,14 @@ A embedding method for Cyber Threat Intelligence
 1. Word2Vec
 2. Fasttext
 3. GloVe
+### glove:
+```
+using Stanford origin glove, we rewrite demo.sh to demo_v2.sh  
+
+take glove parameter with python, and embedding
+
+
+```
 4. CNN-based Infusion
 
 ## Installation
@@ -33,6 +41,8 @@ After that, we can install the glove-python:
 ```bash
 	pip install glove-python
 ```
+
+
 
 ### References
 1. Kuntal Dey, Ritvik Shrivastava, Saroj Kaushik, and L Venkata Subramaniam. [EmTaggeR: A Word Embedding Based Novel Method for Hashtag Recommendation on Twitter.](https://arxiv.org/pdf/1712.01562.pdf) In ICDM, 2017.
