@@ -9,9 +9,9 @@ A embedding method for Cyber Threat Intelligence
 3. GloVe
 ### glove:
 ```
-using Stanford origin glove, we rewrite demo.sh to demo_v2.sh  
+     using Stanford origin glove, we rewrite demo.sh to demo_v2.sh  
 
-take glove parameter with python, and embedding
+     take glove parameter with python, and embedding
 
 
 ```
