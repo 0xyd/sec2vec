@@ -1,3 +1,6 @@
+import subprocess
+from subprocess import Popen
+from subprocess import PIPE
 from collections import Iterator
 from multiprocessing import cpu_count
 
@@ -227,57 +230,47 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 
 
 #11/24 add 
-class SecGloVe(Glove):
+class SecGloVe(object):
 
-	def __init__(
-		self, corpus_file=None, vocab_file='vector.txt',
-		min_count=5, size=100, window=5, threads=3,
-		iters=5, X_max=10, memory=4.0
-		# cooccurrence_file='cooccurrence.bin',
-		# cooccurrence_shuf_file='cooccurrence.shuf.bin', 
-		):
 
-		# super().__init__(
-			# corpus_file=corpus_file, vocab_file=vocab_file,
-			# min_count=min_count, size=size, window=window, threads=threads,
-			# iters=iters, X_max=X_max, memory=memory
-			# cooccurrence_file=cooccurrence_file, 
-			# cooccurrence_shuf_file=cooccurrence_shuf_file,
-			# )
+    def __init__(
+        self, corpus_file=None, vocab_file='vocab.txt',
+        min_count=5, size=100, window=5, threads=3,
+        iters=5, X_max=10, memory=4.0
+        # cooccurrence_file='cooccurrence.bin',
+        # cooccurrence_shuf_file='cooccurrence.shuf.bin', 
+        ):
+        self.corpus_file = corpus_file
+        self.vocab_file = vocab_file
+        self.min_count = min_count
+        self.size = size
+        self.window = window
+        self.threads = threads
+        self.iters = iters
+        self.X_max = X_max
+        self.memory = memory
 
-	def train_embed(self):
+    
+    def train_embed(self):
 
-		argument = ['./demo_v2.sh','--Corpus_File={}'.format(self.corpus_file),
-			'--Vocab_File={}'.format(self.vocab_file), '--Vocab_Min_Count={}'.format(self.min_count), 
-			'--Vector_Size={}'.format(self.size), '--Window={}'.format(self.window),
-			'--Threads={}'.format(self.threads), '--iters={}'.format(self.iters),
-			'--X_max={}'.format(self.X_max), '--Memory={}'.format(self.memory),
+        argument = ['./demo_v2.sh','--Corpus_File={}'.format(self.corpus_file),
+                    '--Vocab_File={}'.format(self.vocab_file), '--Vocab_Min_Count={}'.format(self.min_count), 
+                    '--Vector_Size={}'.format(self.size), '--Window={}'.format(self.window),
+                    '--Threads={}'.format(self.threads), '--iters={}'.format(self.iters),
+                    '--X_max={}'.format(self.X_max), '--Memory={}'.format(self.memory)
+                    ]
+        process = subprocess.Popen(argument, stdin=PIPE, stderr=PIPE, stdout=PIPE, cwd='glove/')
 
-		]
+        end_of_pipe = process.stdout
 
-		process = subprocess.Popen(argument, stdin=PIPE, stderr=PIPE, stdout=PIPE, cwd='glove/')
-		
-		end_of_pipe = process.stdout
+        print('run glove :')
+        for line in end_of_pipe:
+            print(line.decode('utf-8').strip())
 
-		print('run glove :')
-		for line in end_of_pipe:
-		    print(line.decode('utf-8').strip())
-
-	# def train(
-	# 	self, sentences=None, corpus_file=None, total_examples=None, 
-	# 	total_words=None, epochs=None, start_alpha=None, end_alpha=None, 
-	# 	word_count=0, queue_factor=2, report_delay=1.0, compute_loss=False):
-
-	# 	self.train(
-	# 		sentences=sentences, corpus_file=corpus_file, 
-	# 		total_examples=total_examples, total_words=total_words, 
-	# 		epochs=epochs, start_alpha=start_alpha, 
-	# 		end_alpha=end_alpha, word_count=word_count, 
-	# 		queue_factor=queue_factor, report_delay=report_delay, 
-	# 		compute_loss=compute_loss)
-
-#test 
+    #test 
 if __name__ == '__main__':
-	s = SecGloVe(corpus_file='./corpus.txt')
-	s.train_embed()
+    
+    s = SecGloVe(corpus_file='./corpus2.txt')
+    s.train_embed()
+
 	
