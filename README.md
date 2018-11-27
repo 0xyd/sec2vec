@@ -15,24 +15,10 @@ A embedding method for Cyber Threat Intelligence
 	pip install -r requirement
 ```
 
-### Installation on Mac OS X
+## Use Stanford glove-master
 
-**Warning**: glove-python does not support clang in Mac OS X. Thus, we have to install latest gcc from homebrew.
+No need to install glove-python, we rewrite demo.sh to demo_v2.sh, parse commend line argument in bash with python popen and run glove embeeding
 
-```bash
-	brew install gcc
-``` 
-
-Once installation is finished, set up environment varables as follow:
-```bash
-	export CC="/usr/local/Cellar/gcc/<gcc version from homebrew>/bin/<g++>"
-	export CFLAGS="-Wa,-q"
-```
-
-After that, we can install the glove-python:
-```bash
-	pip install glove-python
-```
 
 ### References
 1. Kuntal Dey, Ritvik Shrivastava, Saroj Kaushik, and L Venkata Subramaniam. [EmTaggeR: A Word Embedding Based Novel Method for Hashtag Recommendation on Twitter.](https://arxiv.org/pdf/1712.01562.pdf) In ICDM, 2017.
