@@ -46,7 +46,7 @@ class Sec2Vec():
 		if token in self.wv:
 			return self.wv[token]
 		else:
-			return self.wv['unk']
+			return self.wv['<unk>']
 
 	def _cal_kv(self):
 
@@ -138,12 +138,12 @@ class Sec2Vec():
 					start_alpha, end_alpha, word_count,
 					queue_factor, report_delay)
 
-			self.wv['unk'] = np.random.uniform(-1, 1, (self.vector_size,))
+			self.wv['<unk>'] = np.random.uniform(-1, 1, (self.vector_size,))
 
 			# 20181127 Hannah Chen, append word vector of 'unk' 
 			# to the array that collects all word vectors
 			if compute_loss:
-				self.wv.vectors_vocab = np.vstack((self.wv.vectors_vocab, self.wv['unk']))
+				self.wv.vectors_vocab = np.vstack((self.wv.vectors_vocab, self.wv['<unk>']))
 
 
 		self._cal_kv()
