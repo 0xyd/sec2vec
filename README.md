@@ -7,14 +7,6 @@ A embedding method for Cyber Threat Intelligence
 1. Word2Vec
 2. Fasttext
 3. GloVe
-
-```	
-	using Stanford origin glove, we rewrite demo.sh to demo_v2.sh  
-
-	take glove parameter with python, and embedding
-
-
-```
 4. CNN-based Infusion
 
 ## Installation
