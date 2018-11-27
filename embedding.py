@@ -116,9 +116,6 @@ class Sec2Vec():
 					queue_factor, report_delay)
 		else:
 
-			# 20181127 Hannah Chen, assign 'unk' before training 
-			self.wv['unk'] = np.random.uniform(-1, 1, (self.vector_size,))
-
 			# 20181126 Hannah Chen, check compute_loss 
 			#(FastText does not contain this variable)
 			if compute_loss:
@@ -128,11 +125,12 @@ class Sec2Vec():
 					corpus_file, total_examples, total_words, epochs, 
 					start_alpha, end_alpha, word_count, compute_loss,
 					queue_factor, report_delay)
+
 			else:
 
-				# 20181127 Hannah Chen, append word vector of 'unk' 
-				# to the array that collects all word vectors
-				self.wv.vectors_vocab = np.vstack((self.wv.vectors_vocab, self.wv['unk']))
+				# # 20181127 Hannah Chen, append word vector of 'unk' 
+				# # to the array that collects all word vectors
+				# self.wv.vectors_vocab = np.vstack((self.wv.vectors_vocab, self.wv['unk']))
 
 				self.train(
 					KeywordCorpusIterator(self.kc), 
@@ -140,7 +138,12 @@ class Sec2Vec():
 					start_alpha, end_alpha, word_count,
 					queue_factor, report_delay)
 
-			# self.wv['unk'] = np.random.uniform(-1, 1, (self.vector_size,))
+			self.wv['unk'] = np.random.uniform(-1, 1, (self.vector_size,))
+
+			# 20181127 Hannah Chen, append word vector of 'unk' 
+			# to the array that collects all word vectors
+			if compute_loss:
+				self.wv.vectors_vocab = np.vstack((self.wv.vectors_vocab, self.wv['unk']))
 
 
 		self._cal_kv()
@@ -206,6 +209,7 @@ class KeywordCorpusFactoryFasttextMixin(Sec2Vec, FastText, KeywordCorpusFactory)
 		negative=5, ns_exponent=0.75, cbow_mean=1, 
 		iter=5, null_word=0, trim_rule=None, 
 		sorted_vocab=1, batch_words=10000):
+
 
 		# 20181126 Hannah Chen, modified variable: corpus_worker
 		KeywordCorpusFactory.__init__(self, keywords, case_sensitive, corpus_worker)
