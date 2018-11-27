@@ -289,15 +289,15 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 		# bucket=2000000, trim_rule=None, batch_words=10000
 
 		# 20181126 Hannah Chen, modified variables 
-		self, keywords, sentences, 
+		self, keywords, sentences, corpus_file=None,
+		size=100, alpha=0.025, word_ngrams=1, 
+		min_n=3, max_n=6, bucket=2000000,
 		corpus_worker=3, corpus_chunksize=256, case_sensitive=False,
-		corpus_file=None, size=100, alpha=0.025,
 		window=5, min_count=5, max_vocab_size=None,
-		sample=0.001, seed=1, workers=3, compute_loss=False,
-		min_alpha=0.0001, sg=0, hs=0, word_ngrams=1, 
-		negative=5, ns_exponent=0.75, cbow_mean=1, 
-		iter=5, null_word=0, min_n=3, max_n=6, sorted_vocab=1, 
-		bucket=2000000, trim_rule=None, batch_words=10000):
+		sample=0.001, seed=1, workers=3, min_alpha=0.0001,
+		sg=0, hs=0, compute_loss=False,negative=5, 
+		ns_exponent=0.75, trim_rule=None, cbow_mean=1, 
+		iter=5, null_word=0,  sorted_vocab=1, batch_words=10000):
 
 
 		super().__init__(
@@ -311,15 +311,15 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 			# bucket=bucket, trim_rule=trim_rule, batch_words=batch_words
 
 			# 20181126 Hannah Chen, modified variables 
-			keywords=keywords, sentences=sentences, corpus_file=corpus_file, 
-			sg=sg, hs=hs, size=size, alpha=alpha, corpus_worker=corpus_worker, 
-			case_sensitive=case_sensitive, corpus_chunksize=corpus_chunksize,
-			window=window, min_count=min_count, max_vocab_size=max_vocab_size,
-			word_ngrams=word_ngrams, sample=sample, seed=seed,
-			workers=workers, min_alpha=min_alpha, negative=negative, 
-			ns_exponent=ns_exponent, cbow_mean=cbow_mean, iter=iter, 
-			null_word=null_word, min_n=min_n, max_n=max_n, sorted_vocab=sorted_vocab, 
-			bucket=bucket, trim_rule=trim_rule, batch_words=batch_words)
+			keywords, sentences, corpus_file,
+			size, alpha, word_ngrams, min_n, max_n, bucket,
+			corpus_worker, corpus_chunksize, case_sensitive,
+			window, min_count, max_vocab_size, 
+			sample, seed, workers, 
+			min_alpha, sg, hs, compute_loss,
+			negative, ns_exponent, cbow_mean, 
+			iter, null_word, trim_rule, 
+			sorted_vocab, batch_words)
 
 		self.build_vocab(
 			(corpus for corpus in KeywordCorpusIterator(self.kc)))
