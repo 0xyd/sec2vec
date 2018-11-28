@@ -1,16 +1,24 @@
+import logging
+import subprocess
+from subprocess import Popen
+from subprocess import PIPE
 from collections import Iterator
 from multiprocessing import cpu_count
 
+import tqdm
 import numpy as np
-from glove import Glove, Corpus
+#from glove import Glove, Corpus
+from gensim.models import KeyedVectors
 from gensim.models import Word2Vec, FastText
+from gensim.scripts.glove2word2vec import glove2word2vec
 
 from logger import EpochLogger
 from preprocessing import KeywordCorpusFactory
 from preprocessing import KeywordCorpusIterator
 
 
-# epoch_logger = EpochLogger()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 
 class SentenceIterator():
 
@@ -31,6 +39,7 @@ class SentenceIterator():
 				'Only String or list of string are acceptable.')
 
 class Sec2Vec():
+
 
 	def __init__(self): pass
 
@@ -83,7 +92,7 @@ class Sec2Vec():
 
 		epochs = epochs if epochs else self.epochs
 		total_examples = total_examples if total_examples else self.corpus_count
-
+	   
 		if update:
 
 			if isinstance(sentences, Iterator):
@@ -108,6 +117,7 @@ class Sec2Vec():
 					start_alpha, end_alpha, word_count, 
 					queue_factor, report_delay)
 		else:
+
 
 			# 20181126 Hannah Chen, check compute_loss 
 			#(FastText does not contain this variable)
@@ -142,6 +152,7 @@ class Sec2Vec():
 		self._cal_kv()
 
 
+		
 
 class KeywordCorpusFactoryWord2VecMixin(Sec2Vec, Word2Vec, KeywordCorpusFactory): 
 
@@ -210,12 +221,14 @@ class KeywordCorpusFactoryFasttextMixin(Sec2Vec, FastText, KeywordCorpusFactory)
 		# self.kc = self.create(sentences, corpus_chunksize, corpus_worker)
 
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
+
 		self.compute_loss = compute_loss
 
 		# 20181126 Hannah Chen, Add keyword_count
 		self.keyword_count = dict(((keyword, 0) for keyword in self.kc.keys()))
 
 		# self.corpus_worker = corpus_worker
+
 		self.corpus_chunksize = corpus_chunksize
 
 		# 20181126 Hannah Chen, initialize epoch_logger
@@ -318,8 +331,130 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 			(corpus for corpus in KeywordCorpusIterator(self.kc)))
 
 
-class SecGloVe(Glove):
 
-	pass
+class KeywordCorpusFactoryGloveMixin(Sec2Vec, KeywordCorpusFactory):
+
+	def __init__(
+		self, keywords, sentences, corpus_file, 
+		corpus_worker, corpus_chunksize, case_sensitive,
+		vocab_file, save_file, 
+		size, window, min_count, threads,
+		iters, X_max, memory,
+		update, pre_train_model, new_model_name
+		):
+
+		KeywordCorpusFactory.__init__(self, keywords, case_sensitive)
+		self.kc = self.create(sentences, corpus_chunksize)
+		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
+		self.keyword_count = dict(((keyword, 0) for keyword in self.kc.keys()))
+		self.corpus_chunksize = corpus_chunksize    
+		
+
+
+
+#11/24 add 
+class SecGloVe(KeywordCorpusFactoryGloveMixin):
+
+	
+
+	def __init__(
+		self, keywords, sentences=None,
+		corpus_file=None, 
+		corpus_worker=3, corpus_chunksize=256, case_sensitive=False, 
+		vocab_file='vocab.txt', save_file='vector',
+		min_count=5, size=100, window=5, threads=3,
+		iters=5, X_max=10, memory=4.0, update=False,
+		pre_train_model=None, new_model_name=None
+		):
+
+		super().__init__(
+			keywords, sentences,
+			corpus_file, corpus_worker,
+			corpus_chunksize, case_sensitive,
+			vocab_file, save_file,
+			min_count, size, window, threads,
+			iters, X_max, memory, update,
+			pre_train_model, new_model_name)
+
+		self.keywords = keywords
+		self.sentences = sentences
+		self.corpus_file = corpus_file
+		self.corpus_worker = corpus_worker
+		self.corpus_chunksize = corpus_chunksize
+		self.case_sensitive = case_sensitive
+		self.vocab_file = vocab_file
+		self.save_file = save_file
+		self.min_count = min_count
+		self.size = size
+		self.window = window
+		self.threads = threads
+		self.iters = iters
+		self.X_max = X_max
+		self.memory = memory
+		self.update = update
+		self.pre_train_model = pre_train_model
+		self.new_model_name = new_model_name
+
+		assert self.sentences or self.corpus_file
+
+		if self.sentences and not self.corpus_file:
+			sentences = (corpus for corpus in KeywordCorpusIterator(self.kc))
+			f = open('./glove/temp_glove_sentence.txt', 'w+')
+
+			for sentence in sentences:
+				f.write(' '.join(sentence))
+				f.write('\n')
+
+			self.corpus_file = 'temp_glove_sentence.txt'
+
+			f.close()
+
+
+
+	def train_glove_embed(self):
+
+		if self.update and self.pre_train_model:  #是否需要update
+
+			if isinstance(self.sentences, Iterator):
+				raise ValueError(
+					'sentences accpets list of str or list of tokens only.')
+
+			glove2word2vec(glove_input_file=self.pre_train_model, \
+						   word2vec_output_file="./glove/glove_vectors_gensim.vec")
+
+			pre_train_model = "./glove/glove_vectors_gensim.vec"
+			pre_trained_vec = KeyedVectors.load_word2vec_format(pre_train_model, binary=False)
+			
+			new_model = Word2Vec(size=self.size, min_count=self.min_count)
+			new_model.build_vocab(sentences)
+			total_examples = new_model.corpus_count
+
+			new_model.build_vocab([list(self.pretrained_vec.vocab.keys())], update=self.update)
+			new_model.intersect_word2vec_format(pre_train_model, binary=False, lockf=1.0)
+			new_model.train(sentences, total_examples=total_examples, epochs=self.iters)
+			new_model.save(self.new_model_name + '.bin')
+
+
+		else:
+
+			argument = [
+				'./demo_v2.sh', '--Corpus_File={}'.format(self.corpus_file),
+				'--Save_File={}'.format(self.save_file), '--Vocab_File={}'.format(self.vocab_file),
+				'--Vocab_Min_Count={}'.format(self.min_count), '--Vector_Size={}'.format(self.size),
+				'--Window={}'.format(self.window), '--Threads={}'.format(self.threads),
+				'--iters={}'.format(self.iters), '--X_max={}'.format(self.X_max),
+				'--Memory={}'.format(self.memory)
+			]
+			process = subprocess.Popen(argument, stdin=PIPE, stdout=PIPE, cwd='glove/')
+			
+			for line in process.stdout:
+				logging.info(line.decode('utf-8').strip())
+
+	def remove_temp_file(self):
+		if self.corpus_file == 'temp_glove_sentence.txt':
+			subprocess.run(['rm','-rf',self.corpus_file],cwd='glove/')
+
+		
+
 
 
