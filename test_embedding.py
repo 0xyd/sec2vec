@@ -133,26 +133,72 @@ class TestSecFastTest():
 
 	def test_init(self):
 
-		fasttext = SecFastText()
-		assert True
+		global wiki_keywords
+		global sample_sentences
 
-		wc = WiKiCorpusIterator(100)
-		ft = SecFastText(wc)
-		assert ft['the'] is not None
-		assert ft['is'] is not None
+		keywords = ['hello', 'world']
+		ft = SecFastText(keywords, sample_sentences, size=10, window=5, iter=1)
+		assert True
 		del ft; gc.collect()
 
-	def test_train(self):
-		pass
+		wc = WiKiCorpusIterator(100, return_str=True)
+		ft = SecFastText(wiki_keywords, wc, size=10, window=10, iter=1)
+		assert True
+		del ft; gc.collect()
 
-	# def test_train(self):
+	def test_train_embed(self):
+		global wiki_keywords
 
-	# 	wc = WiKiCorpusIterator(100)
-	# 	ft = SecFastText(wc)
-	# 	ft.train(wc)
+		wc  = WiKiCorpusIterator(10, return_str=True)
+		ft = SecFastText(wiki_keywords, wc, size=10, window=10, iter=1, min_count=1)
+		ft.train_embed()
 
-	# 	assert ft.wv['the'] is not None
-	# 	assert ft.wv['is'] is not None
-	# 	del ft; gc.collect()
+		assert ft.kc is not None
+		assert ft['the'] is not None
+		assert ft.kc['is'] is not None
+
+		old_is_vec = ft.kc['is']
+
+		for keyword in wiki_keywords:
+			assert ft.kv[keyword].shape[0] == 10
+			assert np.any(ft.kv[keyword]) < 100
+
+		# update with new sentences
+		ft.train_embed(
+			sentences=[
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example', 'again']],
+			update=True)
+
+		assert ft['example.'] is not None
+
+		ft.train_embed(
+			sentences=[
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example again']],
+			update=True)
+
+		print(ft.kv['is'])
+
+		assert not np.array_equal(old_is_vec, ft.kv['is'])
+		del ft; gc.collect()
 
 
