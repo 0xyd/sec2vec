@@ -58,8 +58,7 @@ class Sec2Vec():
     def _cal_kv(self):
 
         for keyword, sentences in self.kc.items():
-            print(keyword)
-            print(sentences)
+
             kv = np.zeros((self.vector_size, ))
             token_count = self.keyword_count[keyword] if self.keyword_count[keyword] else 0
 
@@ -168,7 +167,6 @@ class KeywordCorpusFactoryFasttextMixin(Sec2Vec, FastText, KeywordCorpusFactory)
         KeywordCorpusFactory.__init__(self, keywords, case_sensitive)
         self.kc = self.create(sentences, corpus_chunksize, corpus_worker)
         self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
-        # self.corpus_worker = corpus_worker
         self.corpus_chunksize = corpus_chunksize
 
         FastText.__init__(self, 
@@ -324,14 +322,13 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
                 raise ValueError(
                     'sentences accpets list of str or list of tokens only.')
 
-            print('glove transfer to word2vec')
             glove2word2vec(glove_input_file=self.pre_train_model, \
                            word2vec_output_file="./glove/glove_vectors_gensim.vec")
 
             pre_train_model = "./glove/glove_vectors_gensim.vec"
 
             pre_trained_vec = KeyedVectors.load_word2vec_format(pre_train_model, binary=False)
-            sentences = [['this', 'is', 'a', 'test', 'case'], ['i', 'have', 'a', 'mac', 'os']]
+            
             new_model = Word2Vec(size=self.size, min_count=self.min_count)
             new_model.build_vocab(sentences)
             total_examples = new_model.corpus_count
@@ -340,6 +337,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
             new_model.intersect_word2vec_format(pre_train_model, binary=False, lockf=1.0)
             new_model.train(sentences, total_examples=total_examples, epochs=self.iters)
             new_model.save(self.new_model_name + '.bin')
+
 
         else:
 
@@ -351,14 +349,16 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
                 '--iters={}'.format(self.iters), '--X_max={}'.format(self.X_max),
                 '--Memory={}'.format(self.memory)
             ]
-
             process = subprocess.Popen(argument, stdin=PIPE, stdout=PIPE, cwd='glove/')
-
-            print('run glove :')
+            
             for line in process.stdout:
                 print(line.decode('utf-8').strip())
 
     def remove_temp_file(self):
         if self.corpus_file == 'temp_glove_sentence.txt':
             subprocess.run(['rm','-rf',self.corpus_file],cwd='glove/')
+
+        
+
+
 
