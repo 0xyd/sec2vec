@@ -52,7 +52,15 @@ class TestKeywordCorpusFactory():
 	def test_keyword_corpus(self):
 
 		kcf = KeywordCorpusFactory(['hello', 'world'])
-		assert kcf.keyword_corpus['hi'] == 'Corpus of Keyword hi does not exist.'
+
+		# 20181124 Hannah Chen, create keyword corpus
+		keyword_corpus = kcf.create(
+			['Hello World is our first program', 
+			'Hello World is our last program']
+		)
+		assert keyword_corpus['hi'] == 'Corpus of Keyword hi does not exist.'
+
+		# assert kcf.keyword_corpus['hi'] == 'Corpus of Keyword hi does not exist.'
 
 	def test_create(self):
 
