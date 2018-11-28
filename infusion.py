@@ -31,24 +31,72 @@ def cal_word_index(embeddings):
 
 class ConvNet(nn.Module):
 	
-	def __init__(self, num_words):
+	def __init__(self, num_words, num_embeddings, channels,
+				 input_embedding_size, output_embedding_size):
 		
 		super().__init__()
 		
 		self.conv_1 = nn.Sequential(
-			nn.Conv1d(4, 4, kernel_size=3),
+			nn.Conv1d(4, channels[0], kernel_size=3),
 			nn.MaxPool1d(3))
+		
+		seq_len = input_embedding_size
+		for nn_layer in self.conv_1:
+			seq_len = self._cal_seq_length(
+				nn_layer, seq_len)
 		
 		self.conv_2 = nn.Sequential(
-			nn.Conv1d(4, 1, kernel_size=3),
+			nn.Conv1d(channels[0], channels[1], kernel_size=3),
 			nn.MaxPool1d(3))
 		
+		for nn_layer in self.conv_2:
+			seq_len = self._cal_seq_length(nn_layer, seq_len)
+			
 		self.fc = nn.Sequential(
-			nn.Linear(32, 300),
-			nn.Linear(300, num_words))
+			nn.Linear(seq_len*channels[-1], output_embedding_size),
+			nn.Linear(output_embedding_size, num_words))
 		
-		# TODO: Softmax
 		self.out = nn.Softmax(1)
+		
+	def _cal_seq_length(self, nn_layer, seq_len):
+		
+		if isinstance(nn_layer, nn.Conv1d):
+			
+			in_channels = nn_layer.in_channels
+			
+			padding = 0
+			for p in nn_layer.padding:
+				padding += p
+			
+			kernel_size = 0
+			for k in nn_layer.kernel_size:
+				kernel_size += k
+				
+			stride = 0
+			for s in nn_layer.stride:
+				stride += s
+			
+			dilation = 0
+			for d in nn_layer.dilation:
+				dilation += d
+				
+			return self._cal_conv1_seq_length(
+				seq_len, kernel_size, stride, padding, dilation)
+		
+		elif isinstance(nn_layer, nn.MaxPool1d):
+			
+			return self._cal_max_pool_seq_length(
+				seq_len, nn_layer.kernel_size, 
+				nn_layer.stride, nn_layer.padding, nn_layer.dilation)
+		
+	
+	def _cal_conv1_seq_length(self, seq_len, kernel_size, stride, padding, dilation):
+		return math.floor((
+			(seq_len + 2*padding - dilation * (kernel_size-1) - 1) / stride) + 1)
+	
+	def _cal_max_pool_seq_length(self, seq_len, kernel_size, stride, padding, dilation):
+		return math.floor((
+			(seq_len+ 2*padding - dilation*(kernel_size-1)) / stride) + 1)
 	
 	def forward(self, x):
 		
@@ -59,6 +107,7 @@ class ConvNet(nn.Module):
 		out = self.out(out)
 		
 		return out
+		
 
 
 class CNNInfusion():
