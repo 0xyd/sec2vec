@@ -1,3 +1,4 @@
+import logging
 import subprocess
 from subprocess import Popen
 from subprocess import PIPE
@@ -17,6 +18,7 @@ from preprocessing import KeywordCorpusIterator
 
 
 epoch_logger = EpochLogger()
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 class SentenceIterator():
 
@@ -351,7 +353,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			process = subprocess.Popen(argument, stdin=PIPE, stdout=PIPE, cwd='glove/')
 			
 			for line in process.stdout:
-				print(line.decode('utf-8').strip())
+				logging.info(line.decode('utf-8').strip())
 
 	def remove_temp_file(self):
 		if self.corpus_file == 'temp_glove_sentence.txt':
