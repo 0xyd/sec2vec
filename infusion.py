@@ -37,7 +37,7 @@ class ConvNet(nn.Module):
 		super().__init__()
 		
 		self.conv_1 = nn.Sequential(
-			nn.Conv1d(4, channels[0], kernel_size=3),
+			nn.Conv1d(num_embeddings, channels[0], kernel_size=3),
 			nn.MaxPool1d(3))
 		
 		seq_len = input_embedding_size
