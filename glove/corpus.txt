@@ -1,0 +1,3 @@
+buffer underwrite buffer underflow software writes buffer 
+usbhid_parse function impact crafted usb device out-of-bounds read linux_kernel linux 
+out-of-bounds read issue discovered certain apple products macos affected issue involves 
