@@ -228,18 +228,18 @@ class CNNInfusion():
 						
 					batch = []
 		
-	def train(self, word_batch, embeddings, learning_rate=0.001):
+	def train(self, word_batch, embeddings, channels,
+			  input_embedding_size=300, output_embedding_size=300, learning_rate=0.001):
 		'''
 		:params kvs:
 		:type kvs: list of dictionary
 		'''
 		
 		word_index = self._cal_word_index(embeddings)
-		sub_word_index = dict()
-		self.infusion_embedding = dict()
-		
+		num_embeddings = len(embeddings)
 		embeddings = self._get_shared_corpus(embeddings)
 
+		sub_word_index = dict()
 		for w_idx, w in enumerate(word_index.keys()):
 	
 			sub_word_index[w] = w_idx % word_batch
@@ -249,7 +249,8 @@ class CNNInfusion():
 				num_words = len(sub_word_index)
 				num_words = num_words if '<unk>' in sub_word_index else num_words+1 
 		
-				cnn = ConvInfusionNet(num_words).to(self.device)
+				cnn = ConvNet(num_words, num_embeddings, channels,
+							  input_embedding_size, output_embedding_size).to(self.device)
 				optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
 
 				self._cnn_train(cnn, optimizer, sub_word_index, embeddings)
@@ -259,6 +260,7 @@ class CNNInfusion():
 				
 				del cnn; gc.collect()
 				torch._C._cuda_emptyCache()
+	
 				
 				
 	
