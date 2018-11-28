@@ -5,42 +5,60 @@ from multiprocessing import Pool, cpu_count
 from flashtext import KeywordProcessor
 
 
-def mp_extract_keywords(
-	keywords, sentences, case_sensitive=False):
+# def mp_extract_keywords(
+# 	keywords, sentences, case_sensitive=False):
 
+# 	corpus = dict()
+# 	kp = KeywordProcessor(case_sensitive=case_sensitive)
+
+# 	for keyword in keywords:
+
+# 		corpus[keyword] = set()
+# 		kp.add_keyword(keyword, ' ')
+
+# 		for sentence in sentences:
+
+# 			if isinstance(sentence, list):
+# 				sentence = ' '.join(sentence)
+
+# 			# 20181123 LIN, Y.D. Remove Duplicates
+# 			if sentence in corpus[keyword]:
+# 				continue
+
+# 			keywords_found = kp.extract_keywords(sentence)
+
+# 			if keywords_found:
+
+# 				# 20181123 LIN, Y.D. Reserved keywords.
+# 				corpus[keyword].add(sentence)
+
+# 				# tokens = list(filter(
+# 				# 	lambda s: s if len(s) > 0 else None, sentence.split(' ')))
+
+# 				# tokens = list(filter(
+# 				# 	lambda s: s if len(s) > 0 else None, 
+# 				# 	kp.replace_keywords(sentence).split(' ')))
+# 				# corpus[keyword].append(tokens)
+
+# 		kp.remove_keyword(keyword)
+
+# 	return corpus
+
+# 20181128 Hannah Chen, Optimize performance
+def mp_extract_keywords(keywords, sentences, case_sensitive=False):
+	
 	corpus = dict()
 	kp = KeywordProcessor(case_sensitive=case_sensitive)
+	
+	kp.add_keywords_from_list(keywords)
 
-	for keyword in keywords:
+	for sentence in sentences:
 
-		corpus[keyword] = set()
-		kp.add_keyword(keyword, ' ')
+		keywords_found = kp.extract_keywords(sentence)
 
-		for sentence in sentences:
-
-			if isinstance(sentence, list):
-				sentence = ' '.join(sentence)
-
-			# 20181123 LIN, Y.D. Remove Duplicates
-			if sentence in corpus[keyword]:
-				continue
-
-			keywords_found = kp.extract_keywords(sentence)
-
-			if keywords_found:
-
-				# 20181123 LIN, Y.D. Reserved keywords.
-				corpus[keyword].add(sentence)
-
-				# tokens = list(filter(
-				# 	lambda s: s if len(s) > 0 else None, sentence.split(' ')))
-
-				# tokens = list(filter(
-				# 	lambda s: s if len(s) > 0 else None, 
-				# 	kp.replace_keywords(sentence).split(' ')))
-				# corpus[keyword].append(tokens)
-
-		kp.remove_keyword(keyword)
+		for keyword in keywords_found:
+			corpus.setdefault(keyword, set())
+			corpus[keyword].add(sentence)
 
 	return corpus
 
