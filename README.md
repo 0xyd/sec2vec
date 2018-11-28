@@ -1,5 +1,9 @@
 # sec2vec
-A embedding method for Cyber Threat Intelligence
+An embedding method for Cyber Threat Intelligence.
+
+Sec2vec enables you to learn word embeddings from security domain corpus using differnet embedding methods and a CNN-based infusion model.  The embedding of each keyword learns from the embeddings of its constituent words, that is, taking the average of all the embeddings of the words that appear in the same context with that keyword.  
+
+This tool is a modified implementation of [EmTaggeR](https://arxiv.org/pdf/1712.01562.pdf) for training security domain keywords.
 
 
 ## Types of Embeddings
