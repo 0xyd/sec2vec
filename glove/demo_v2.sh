@@ -57,6 +57,11 @@ Memory="${i#*=}"
 shift # past argument=value
 ;;
 
+-sf=*|--Save_File=*)
+Save_File="${i#*=}"
+shift # past argument=value
+;;
+
 *)
 # unknown option
 ;;
@@ -82,7 +87,7 @@ binary=2
 cooccurrence_file=cooccurrence.bin
 cooccurrence_shuf_file=cooccurrence.shuf.bin
 builddir=build
-save_file=vectors
+
 
 echo "$ $builddir/vocab_count -min-count $Vocab_Min_Count -verbose $verbose < $Corpus_File > $Vocab_File"
 $builddir/vocab_count -min-count $Vocab_Min_Count -verbose $verbose < $Corpus_File > $Vocab_File
@@ -92,9 +97,9 @@ echo "$ $builddir/cooccur -memory $Memory -vocab-file $Vocab_File -verbose $verb
 $builddir/cooccur -memory $Memory -vocab-file $Vocab_File -verbose $verbose -window-size $Window < $Corpus_File > $cooccurrence_file
 echo "$ $builddir/shuffle -memory $Memory -verbose $verbose < $cooccurrence_file > $cooccurrence_shuf_file"
 $builddir/shuffle -memory $Memory -verbose $verbose < $cooccurrence_file > $cooccurrence_shuf_file
-echo "$ $builddir/glove -save-file $save_file -threads $Threads -input-file $cooccurrence_shuf_file -x-max $X_max -iter $iters -vector-size $Vector_Size -binary $binary -vocab-file $Vocab_File -verbose $verbose"
-$builddir/glove -save-file $save_file -threads $Threads -input-file $cooccurrence_shuf_file -x-max $X_max -iter $iters -vector-size $Vector_Size -binary $binary -vocab-file $Vocab_File -verbose $verbose
-
+echo "$ $builddir/glove -save-file $Save_File -threads $Threads -input-file $cooccurrence_shuf_file -x-max $X_max -iter $iters -vector-size $Vector_Size -binary $binary -vocab-file $Vocab_File -verbose $verbose"
+$builddir/glove -save-file $Save_File -threads $Threads -input-file $cooccurrence_shuf_file -x-max $X_max -iter $iters -vector-size $Vector_Size -binary $binary -vocab-file $Vocab_File -verbose $verbose
+echo "end to embedding..."
 
 
 
