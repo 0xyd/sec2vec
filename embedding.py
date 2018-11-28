@@ -90,15 +90,8 @@ class Sec2Vec():
 				raise ValueError(
 					'sentences accpets list of str or list of tokens only.')
 
-			print('sentences: {}'.format(sentences))
-			print('update: {}'.format(update))
-			print('keywords: {}'.format(keywords))
-
 			self.build_vocab(SentenceIterator(sentences), update=update)
 			self.update(keywords, SentenceIterator(sentences))
-
-			print('Number of vocabs: {}'.format(len(self.wv.vocab)))
-			print('Last word: {}'.format(list(self.wv.vocab.keys())[-1]))
 
 			# 20181126 Hannah Chen, check compute_loss 
 			#(FastText does not contain this variable)
