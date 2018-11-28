@@ -62,155 +62,155 @@ class ConvNet(nn.Module):
 
 
 class CNNInfusion():
-    
-    def __init__(self, epochs, batch_size, embedding_size):
-        
-        self.iv = dict()
-        self.epochs = epochs
-        self.batch_size = batch_size
-        self.embedding_size = embedding_size
-        self.criterion = nn.BCELoss()
-        self.device = torch.device(
-            'cuda:0' if torch.cuda.is_available() else 'cpu')
-        
-    def _cal_word_index(self, embeddings):
+	
+	def __init__(self, epochs, batch_size, embedding_size):
+		
+		self.iv = dict()
+		self.epochs = epochs
+		self.batch_size = batch_size
+		self.embedding_size = embedding_size
+		self.criterion = nn.BCELoss()
+		self.device = torch.device(
+			'cuda:0' if torch.cuda.is_available() else 'cpu')
+		
+	def _cal_word_index(self, embeddings):
 
-        word_set = set()
+		word_set = set()
 
-        for embedding in embeddings:
-            for corpus in embedding.kc.values():
-                for sentence in corpus:
-                    for s in sentence.split(' '):
-                        word_set.add(s)
+		for embedding in embeddings:
+			for corpus in embedding.kc.values():
+				for sentence in corpus:
+					for s in sentence.split(' '):
+						word_set.add(s)
 
-        word_index = dict(
-            (word, index) for index, word in enumerate(word_set))
+		word_index = dict(
+			(word, index) for index, word in enumerate(word_set))
 
-        return word_index
-    
-    
-    def _get_shared_corpus(self, embeddings):
-        '''
-        Get shared keywords and corpus across different embeddings.
-        '''
-        
-        shared_keywords = set()
-        
-        for i, e in enumerate(embeddings):
-            
-            if i:
-                shared_keywords = shared_keywords.union(set(e.kv.keys()))
-            else:
-                shared_keywords = set(e.kv.keys())
-            
-        shared_embedding = dict()
-        
-        for keyword in shared_keywords:
-            
-            corpus = None
-            
-            # Corpus must be the same otherwise infusion is invalid.
-            for i, e in enumerate(embeddings):
-                
-                if i:
-                    if corpus != e.kc[keyword]:
-                        print(
-                            'Different embeddinga should share the same corpus for keyword {}'.format(keyword))
-                        break
-                else:
-                    corpus = e.kc[keyword]
-                    
-            shared_embedding[keyword] = dict()
-            shared_embedding[keyword]['corpus'] = corpus
-            shared_embedding[keyword]['vector'] = []
-            
-            for e in embeddings:
-                shared_embedding[keyword]['vector'].append(e.kv[keyword])
-        
-        return shared_embedding
-        
-    
-    def _cnn_train(self, cnn, optimizer, word_index, embeddings):
-        
-        total_size = len(embeddings)
-        if '<unk>' not in word_index: word_index['<unk>'] = len(word_index)
-        num_words = len(word_index)
-        
-        for epoch in tqdm_notebook(range(self.epochs)):
-            
-            batch = []
-            batch_count = 0
-            for i, (keyword, data) in tqdm_notebook(enumerate(embeddings.items()), total=total_size):
-                
-                tokens = set(
-                    [s for sentence in data['corpus'] for s in sentence.split(' ')])
-                tokens_index = [
-                    word_index[token] if token in word_index else word_index['<unk>'] 
-                        for token in tokens]
-                batch.append((tokens, tokens_index, data['vector']))
-                
-                if len(batch) == batch_size:
+		return word_index
+	
+	
+	def _get_shared_corpus(self, embeddings):
+		'''
+		Get shared keywords and corpus across different embeddings.
+		'''
+		
+		shared_keywords = set()
+		
+		for i, e in enumerate(embeddings):
+			
+			if i:
+				shared_keywords = shared_keywords.union(set(e.kv.keys()))
+			else:
+				shared_keywords = set(e.kv.keys())
+			
+		shared_embedding = dict()
+		
+		for keyword in shared_keywords:
+			
+			corpus = None
+			
+			# Corpus must be the same otherwise infusion is invalid.
+			for i, e in enumerate(embeddings):
+				
+				if i:
+					if corpus != e.kc[keyword]:
+						print(
+							'Different embeddinga should share the same corpus for keyword {}'.format(keyword))
+						break
+				else:
+					corpus = e.kc[keyword]
+					
+			shared_embedding[keyword] = dict()
+			shared_embedding[keyword]['corpus'] = corpus
+			shared_embedding[keyword]['vector'] = []
+			
+			for e in embeddings:
+				shared_embedding[keyword]['vector'].append(e.kv[keyword])
+		
+		return shared_embedding
+		
+	
+	def _cnn_train(self, cnn, optimizer, word_index, embeddings):
+		
+		total_size = len(embeddings)
+		if '<unk>' not in word_index: word_index['<unk>'] = len(word_index)
+		num_words = len(word_index)
+		
+		for epoch in tqdm_notebook(range(self.epochs)):
+			
+			batch = []
+			batch_count = 0
+			for i, (keyword, data) in tqdm_notebook(enumerate(embeddings.items()), total=total_size):
+				
+				tokens = set(
+					[s for sentence in data['corpus'] for s in sentence.split(' ')])
+				tokens_index = [
+					word_index[token] if token in word_index else word_index['<unk>'] 
+						for token in tokens]
+				batch.append((tokens, tokens_index, data['vector']))
+				
+				if len(batch) == batch_size:
 #                 if len(batch) == batch_size or i+batch_size > total_size:
-                    
-                    feature_map = torch.tensor(
-                        np.array([b[2] for b in batch])).to(
-                            device, dtype=torch.float32)
-                    lbls = torch.tensor(
-                        np.zeros((batch_size, num_words))).to(
-                            device, dtype=torch.float32)
-            
-                    for i, index in enumerate((b[1] for b in batch)):
-                        lbls[i, index] = 1.
-                    
-                    outputs = cnn(feature_map)
-                    loss = self.criterion(outputs, lbls)
-                    loss.backward()
-                    optimizer.zero_grad()
-                    
-                    if i + batch_size > total_size:
-                        batch_count = total_size
-                    else:
-                        batch_count += 1
-                        
-                    if batch_count % 100 == 0:
-                        print('Epoch [{}/{}], Step [{}/{}], Loss: {:.8f}' 
-                              .format(epoch+1, self.epochs, batch_count, total_size, loss.item()))
-                        
-                    batch = []
-        
-    def train(self, word_batch, embeddings, learning_rate=0.001):
-        '''
-        :params kvs:
-        :type kvs: list of dictionary
-        '''
-        
-        word_index = self._cal_word_index(embeddings)
-        sub_word_index = dict()
-        self.infusion_embedding = dict()
-        
-        embeddings = self._get_shared_corpus(embeddings)
+					
+					feature_map = torch.tensor(
+						np.array([b[2] for b in batch])).to(
+							device, dtype=torch.float32)
+					lbls = torch.tensor(
+						np.zeros((batch_size, num_words))).to(
+							device, dtype=torch.float32)
+			
+					for i, index in enumerate((b[1] for b in batch)):
+						lbls[i, index] = 1.
+					
+					outputs = cnn(feature_map)
+					loss = criterion(outputs, lbls)
+					optimizer.zero_grad()
+					loss.backward()
+					optimizer.step()
+					
+					if i + batch_size > total_size:
+						batch_count = total_size
+					else:
+						batch_count += 1
+						
+					if batch_count % 100 == 0:
+						print('Epoch [{}/{}], Step [{}/{}], Loss: {:.8f}' 
+							  .format(epoch+1, self.epochs, batch_count, total_size, loss.item()))
+						
+					batch = []
+		
+	def train(self, word_batch, embeddings, learning_rate=0.001):
+		'''
+		:params kvs:
+		:type kvs: list of dictionary
+		'''
+		
+		word_index = self._cal_word_index(embeddings)
+		sub_word_index = dict()
+		self.infusion_embedding = dict()
+		
+		embeddings = self._get_shared_corpus(embeddings)
 
-        for w_idx, w in enumerate(word_index.keys()):
-    
-            sub_word_index[w] = w_idx % word_batch
-    
-            if (w_idx+1) % word_batch == 0 and w_idx > 1:
-        
-                num_words = len(sub_word_index)
-                num_words = num_words if '<unk>' in sub_word_index else num_words+1 
-        
-                cnn = ConvInfusionNet(num_words).to(self.device)
-                optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
+		for w_idx, w in enumerate(word_index.keys()):
+	
+			sub_word_index[w] = w_idx % word_batch
+	
+			if (w_idx+1) % word_batch == 0 and w_idx > 1:
+		
+				num_words = len(sub_word_index)
+				num_words = num_words if '<unk>' in sub_word_index else num_words+1 
+		
+				cnn = ConvInfusionNet(num_words).to(self.device)
+				optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
 
-                self._cnn_train(cnn, optimizer, sub_word_index, embeddings)
-                
-                for word, index in sub_word_index.items():
-                    self.iv[word] = cnn.fc[-1].weight.data[index]
-                
-                del cnn; gc.collect()
-                torch._C._cuda_emptyCache()
-                
-    
+				self._cnn_train(cnn, optimizer, sub_word_index, embeddings)
+				
+				for word, index in sub_word_index.items():
+					self.iv[word] = cnn.fc[-1].weight.data[index]
+				
+				del cnn; gc.collect()
+				torch._C._cuda_emptyCache()
+				
 				
 	
 
