@@ -53,6 +53,9 @@ def mp_extract_keywords(keywords, sentences, case_sensitive=False):
 	kp.add_keywords_from_list(keywords)
 
 	for sentence in sentences:
+		
+		if isinstance(sentence, list):
+			sentence = ' '.join(sentence)
 
 		keywords_found = kp.extract_keywords(sentence)
 
