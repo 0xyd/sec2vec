@@ -54,155 +54,155 @@ class WiKiCorpusIterator():
 		else:
 			return next(self.wiki_iter)	
 
-# class TestSecWord2Vec():
+class TestSecWord2Vec():
 
-# 	def test_init(self):
+	def test_init(self):
 
-# 		global keywords
-# 		global wiki_keywords
-# 		global sample_sentences
+		global keywords
+		global wiki_keywords
+		global sample_sentences
 
-# 		w2v = SecWord2Vec(keywords, sample_sentences, size=10, window=10, iter=1)
-# 		assert True
-# 		del w2v; gc.collect()
+		w2v = SecWord2Vec(keywords, sample_sentences, size=10, window=10, iter=1)
+		assert True
+		del w2v; gc.collect()
 
-# 		wc  = WiKiCorpusIterator(10, return_str=True)
-# 		w2v = SecWord2Vec(wiki_keywords, wc, size=10, window=10, iter=1)
-# 		assert True
-# 		del w2v; gc.collect()
+		wc  = WiKiCorpusIterator(10, return_str=True)
+		w2v = SecWord2Vec(wiki_keywords, wc, size=10, window=10, iter=1)
+		assert True
+		del w2v; gc.collect()
 
-# 	def test_train_embed(self):
+	def test_train_embed(self):
 
-# 		global wiki_keywords
+		global wiki_keywords
 
-# 		wc  = WiKiCorpusIterator(10, return_str=True)
-# 		w2v = SecWord2Vec(wiki_keywords, wc, size=10, window=10, iter=1)
-# 		w2v.train_embed()
+		wc  = WiKiCorpusIterator(10, return_str=True)
+		w2v = SecWord2Vec(wiki_keywords, wc, size=10, window=10, iter=1)
+		w2v.train_embed()
 
-# 		assert w2v.kc is not None
-# 		assert w2v['the'] is not None
-# 		assert w2v.kc['is'] is not None
+		assert w2v.kc is not None
+		assert w2v['the'] is not None
+		assert w2v.kc['is'] is not None
 
-# 		old_is_vec = w2v.kc['is']
+		old_is_vec = w2v.kc['is']
 
-# 		for keyword in wiki_keywords:
-# 			assert w2v.kv[keyword].shape[0] == 10
-# 			assert np.any(w2v.kv[keyword]) < 100
+		for keyword in wiki_keywords:
+			assert w2v.kv[keyword].shape[0] == 10
+			assert np.any(w2v.kv[keyword]) < 100
 
-# 		# update with new sentences
-# 		w2v.train_embed(
-# 			sentences=[
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example', 'again']],
-# 			update=True)
+		# update with new sentences
+		w2v.train_embed(
+			sentences=[
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example', 'again']],
+			update=True)
 
-# 		assert w2v['example.'] is not None
+		assert w2v['example.'] is not None
 
-# 		w2v.train_embed(
-# 			sentences=[
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example again']],
-# 			update=True)
+		w2v.train_embed(
+			sentences=[
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example again']],
+			update=True)
 
-# 		assert not np.array_equal(old_is_vec, w2v.kv['is'])
+		assert not np.array_equal(old_is_vec, w2v.kv['is'])
 
-# 		# TODO: Test 
-# 		# with pytest.raises(
-# 		# 	ValueError, match='This is a hello world example. does not exist.'):
-# 		# 	w2v['This is a hello world example.']
+		# TODO: Test 
+		# with pytest.raises(
+		# 	ValueError, match='This is a hello world example. does not exist.'):
+		# 	w2v['This is a hello world example.']
 
-# 		del w2v; gc.collect()
+		del w2v; gc.collect()
 
 
-# class TestSecFastText():
+class TestSecFastText():
 
-# 	def test_init(self):
+	def test_init(self):
 
-# 		global keywords
-# 		global wiki_keywords
-# 		global sample_sentences
+		global keywords
+		global wiki_keywords
+		global sample_sentences
 
-# 		ft = SecFastText(keywords, sample_sentences, size=10, window=5, iter=1)
-# 		assert True
-# 		del ft; gc.collect()
+		ft = SecFastText(keywords, sample_sentences, size=10, window=5, iter=1)
+		assert True
+		del ft; gc.collect()
 
-# 		wc = WiKiCorpusIterator(100, return_str=True)
-# 		ft = SecFastText(wiki_keywords, wc, size=10, window=10, iter=1)
-# 		assert True
-# 		del ft; gc.collect()
+		wc = WiKiCorpusIterator(100, return_str=True)
+		ft = SecFastText(wiki_keywords, wc, size=10, window=10, iter=1)
+		assert True
+		del ft; gc.collect()
 
-# 	def test_train_embed(self):
-# 		global wiki_keywords
+	def test_train_embed(self):
+		global wiki_keywords
 
-# 		wc  = WiKiCorpusIterator(10, return_str=True)
-# 		ft = SecFastText(wiki_keywords, wc, size=10, window=10, iter=1, min_count=1)
-# 		ft.train_embed()
+		wc  = WiKiCorpusIterator(10, return_str=True)
+		ft = SecFastText(wiki_keywords, wc, size=10, window=10, iter=1, min_count=1)
+		ft.train_embed()
 
-# 		assert ft.kc is not None
-# 		assert ft['the'] is not None
-# 		assert ft.kc['is'] is not None
+		assert ft.kc is not None
+		assert ft['the'] is not None
+		assert ft.kc['is'] is not None
 
-# 		old_is_vec = ft.kc['is']
+		old_is_vec = ft.kc['is']
 
-# 		for keyword in wiki_keywords:
-# 			assert ft.kv[keyword].shape[0] == 10
-# 			assert np.any(ft.kv[keyword]) < 100
+		for keyword in wiki_keywords:
+			assert ft.kv[keyword].shape[0] == 10
+			assert np.any(ft.kv[keyword]) < 100
 
-# 		# update with new sentences
-# 		ft.train_embed(
-# 			sentences=[
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 				['This', 'is', 'a', 'hello', 'world', 'example', 'again']],
-# 			update=True)
+		# update with new sentences
+		ft.train_embed(
+			sentences=[
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example', 'again']],
+			update=True)
 
-# 		assert ft['example.'] is not None
+		assert ft['example.'] is not None
 
-# 		ft.train_embed(
-# 			sentences=[
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example.'],
-# 				['This is a hello world example again']],
-# 			update=True)
+		ft.train_embed(
+			sentences=[
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example again']],
+			update=True)
 
-# 		print(ft.kv['is'])
+		print(ft.kv['is'])
 
-# 		assert not np.array_equal(old_is_vec, ft.kv['is'])
-# 		del ft; gc.collect()
+		assert not np.array_equal(old_is_vec, ft.kv['is'])
+		del ft; gc.collect()
 
 
 class TestSecGlove():
