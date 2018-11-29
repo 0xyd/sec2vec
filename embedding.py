@@ -341,7 +341,7 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 
 
 
-class KeywordCorpusFactoryGloveMixin(KeywordCorpusFactory):
+class KeywordCorpusFactoryGloveMixin(Sec2Vec, KeywordCorpusFactory):
 
 	def __init__(
 		# self, keywords, sentences, corpus_file, 
@@ -369,10 +369,7 @@ class KeywordCorpusFactoryGloveMixin(KeywordCorpusFactory):
 
 
 #11/24 add 
-# class SecGloVe(KeywordCorpusFactoryGloveMixin):
-
-# 20181128 Hannah Chen, add inheritance from Sec2Vec
-class SecGloVe(Sec2Vec, KeywordCorpusFactoryGloveMixin):
+class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 	def __init__(
 		# self, keywords, sentences=None,
@@ -392,7 +389,7 @@ class SecGloVe(Sec2Vec, KeywordCorpusFactoryGloveMixin):
 		output_file='./glove/glove_vectors_gensim.vec'
 		):
 
-		KeywordCorpusFactoryGloveMixin.__init__(
+		super().__init__(
 			# keywords, sentences,
 			# corpus_file, corpus_worker,
 			# corpus_chunksize, case_sensitive,
@@ -402,7 +399,7 @@ class SecGloVe(Sec2Vec, KeywordCorpusFactoryGloveMixin):
 			# pretrained_model_file, new_model_name
 
 			# 20181128 Hannah Chen, modify class variables
-			self, keywords, sentences, corpus_file, 
+			keywords, sentences, corpus_file, 
 			corpus_worker, corpus_chunksize, case_sensitive,
 			vocab_file, save_file, size, window, min_count, threads, 
 			iter, X_max, memory, pretrained_model_file, output_file)
@@ -489,7 +486,7 @@ class SecGloVe(Sec2Vec, KeywordCorpusFactoryGloveMixin):
 				self.wv = new_model.wv
 				del new_model
 
-			self._cal_kv()
+			Sec2Vec._cal_kv(self)
 
 		else:
 
@@ -509,7 +506,7 @@ class SecGloVe(Sec2Vec, KeywordCorpusFactoryGloveMixin):
 			self.pre_trained_vec = self._load_glove_vec('./glove/{}.txt'.format(self.save_file))
 			self.wv = self.pre_trained_vec.wv
 
-			self._cal_kv()
+			Sec2Vec._cal_kv(self)
 
 	# def train_glove_embed(self):
 
