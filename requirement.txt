@@ -1,4 +1,5 @@
 numpy
 gensim
 torch
+tqdm
 flashtext

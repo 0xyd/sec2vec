@@ -152,10 +152,11 @@ class Sec2Vec():
 					queue_factor, report_delay)
 
 			self.wv['<unk>'] = np.random.uniform(-1, 1, (self.vector_size,))
+			print('test')
 
 			# 20181127 Hannah Chen, append word vector of 'unk' 
 			# to the array that collects all word vectors
-			if compute_loss:
+			if not compute_loss:
 				self.wv.vectors_vocab = np.vstack((self.wv.vectors_vocab, self.wv['<unk>']))
 
 
@@ -490,8 +491,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 				if not self.pre_trained_vec:
 					pre_trained_vec = _load_pretrained_model('./{}/{}.txt'.format(self.glove_dir ,self.save_file))
 			
-				new_model = Word2Vec(size=self.size, min_count=self.min_count)
-				new_model.build_vocab(SentenceIterator(sentences))
+				new_model = Word2Vec(SentenceIterator(sentences), size=self.size, min_count=self.min_count)
 
 				new_model.build_vocab([list(self.pre_trained_vec.vocab.keys())], update=update)
 				new_model.intersect_word2vec_format(self.pretrained_model_file, binary=False, lockf=1.0)
@@ -501,14 +501,14 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 				self.wv = new_model.wv
 				del new_model
 
-			Sec2Vec._cal_kv(self)
+			self._cal_kv()
 
 		else:
 
 			#20181229 arvis add variables
 			#initializing shell command
 			glove_command = ['make']	
-			
+
 			glove_command.append('{}/vocab_count -min-count {} -verbose {} < {} > {}'\
 				.format(self.builddir, self.min_count, self.verbose, self.corpus_file, self.vocab_file))
 			
@@ -544,4 +544,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 	# 20181128 Hannah Chen, add output SecGloVe method
 	def save(self, new_model_name, binary=False):
 		self.model.wv.save_word2vec_format(new_model_name + '.bin', binary=binary)
+
+	def load(self, fname, binary=False):
+		return SecGloVe(pre_trained_vec=KeyedVectors.load_word2vec_format(fname, binary))
 
