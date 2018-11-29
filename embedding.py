@@ -464,7 +464,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 				raise ValueError(
 					'sentences accpets list of str or list of tokens only.')
 
-			KeywordCorpusFactory.update(self, keywords, SentenceIterator(sentences))
+			self.update(keywords, SentenceIterator(sentences))
 
 			if self.model:
 				self.model.build_vocab(SentenceIterator(sentences), update=True)
@@ -486,7 +486,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 				self.wv = new_model.wv
 				del new_model
 
-			Sec2Vec._cal_kv(self)
+			self._cal_kv()
 
 		else:
 
@@ -506,7 +506,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			self.pre_trained_vec = self._load_glove_vec('./glove/{}.txt'.format(self.save_file))
 			self.wv = self.pre_trained_vec.wv
 
-			Sec2Vec._cal_kv(self)
+			self._cal_kv()
 
 	# def train_glove_embed(self):
 
