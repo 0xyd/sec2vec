@@ -513,8 +513,3 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 	def _remove_temp_file(self):
 		if self.corpus_file == 'temp_glove_sentence.txt':
 			subprocess.run(['rm','-rf',self.corpus_file],cwd=self.glove_dir)
-
-		
-
-
-
