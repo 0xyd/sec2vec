@@ -19,20 +19,18 @@ This tool is a modified implementation of [EmTaggeR](https://arxiv.org/pdf/1712.
 	pip install -r requirement
 ```
 
-## Use Stanford glove-master
+## (Optional) Stanford Glove
 
-No need to install glove-python, we rewrite demo.sh to demo_v2.sh, parse commend line argument in bash with python popen and run glove embeeding
+sec2vec provides glove package wrapper. Please put the glove folder in the correct path for usage with following steps.
+
+1. Download the code from [Stanford Glove](https://nlp.stanford.edu/projects/glove/)
+2. Unzipped the zipped file
+3. Put the unzipped file to the directory of your working project
+4. Enter GloVe folder and compile it by *make*
 
 
 
-
-### References
-1. Kuntal Dey, Ritvik Shrivastava, Saroj Kaushik, and L Venkata Subramaniam. [EmTaggeR: A Word Embedding Based Novel Method for Hashtag Recommendation on Twitter.](https://arxiv.org/pdf/1712.01562.pdf) In ICDM, 2017.
-2. Lap Q. Trieu, Huy Q. Tran, Minh-Triet Tran. [News Classification from Social Media Using Twitter-based Doc2Vec Model and Automatic Query Expansion.](https://dl.acm.org/citation.cfm?id=3155206) In SoICT, 2017.
-3. Kozo Chikai, Yuki Arase. [Analysis of Similarity Measures between Short Text for the NTCIR-12 Short Text Conversation Task.](https://pdfs.semanticscholar.org/0ca2/d9d6e2f712d140f7b07a6aa0f91bd45d2e3a.pdf) In NTCIR, 2016.
-4. Zongcheng Ji, Zhengdong Lu, Hang Li. [An Information Retrieval Approach to Short Text Conversation.](https://arxiv.org/pdf/1408.6988.pdf) In CoRR abs/1408.6988, 2014.
-
-### References
+## References
 1. Kuntal Dey, Ritvik Shrivastava, Saroj Kaushik, and L Venkata Subramaniam. [EmTaggeR: A Word Embedding Based Novel Method for Hashtag Recommendation on Twitter.](https://arxiv.org/pdf/1712.01562.pdf) In ICDM, 2017.
 2. Lap Q. Trieu, Huy Q. Tran, Minh-Triet Tran. [News Classification from Social Media Using Twitter-based Doc2Vec Model and Automatic Query Expansion.](https://dl.acm.org/citation.cfm?id=3155206) In SoICT, 2017.
 3. Kozo Chikai, Yuki Arase. [Analysis of Similarity Measures between Short Text for the NTCIR-12 Short Text Conversation Task.](https://pdfs.semanticscholar.org/0ca2/d9d6e2f712d140f7b07a6aa0f91bd45d2e3a.pdf) In NTCIR, 2016.

@@ -1,6 +1,11 @@
 numpy
 gensim
 torch
+<<<<<<< HEAD
 glove-python
 flashtext
 dill
+=======
+tqdm
+flashtext
+>>>>>>> upstream/features/embedding

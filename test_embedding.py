@@ -131,6 +131,22 @@ class TestSecWord2Vec():
 
 		del w2v; gc.collect()
 
+	def test_save_embed(self):
+
+		global keywords
+		global sample_sentences
+
+		w2v = SecWord2Vec(keywords, sample_sentences, size=10, window=10, iter=1)
+		w2v.save_embed('test_w2v.pkl')
+
+		assert os.path.isfile('test_w2v.pkl')
+
+	def test_load_embed(self):
+
+		w2v = w2v.load_embed('test_w2v.pkl')
+
+		assert w2v
+
 
 class TestSecFastText():
 
