@@ -362,7 +362,6 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		self.iter = iter
 		self.X_max = X_max
 		self.memory = memory
-		self.pretrained_model_file = pretrained_model_file
 		self.pre_trained_vec = None
 		# self.output_file = output_file
 
@@ -374,13 +373,15 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		assert self.sentences or self.corpus_file
 
 		if self.sentences and not self.corpus_file:
-			sentences = (corpus for corpus in KeywordCorpusIterator(self.kc))
+			# sentences = (corpus for corpus in KeywordCorpusIterator(self.kc))
 
 			# 20181129 Hannah Chen, change input path
 			f = open('{}/temp_glove_sentence.txt'.format(self.glove_dir), 'w+')
 			# f = open('./glove/temp_glove_sentence.txt', 'w+')
 
-			for sentence in sentences:
+			# 20181129 Hannah Chen
+			for sentence in SentenceIterator(sentences):
+			# for sentence in sentences:
 				f.write(' '.join(sentence))
 				f.write('\n')
 
@@ -448,7 +449,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			]
 			process = subprocess.Popen(argument, stdin=PIPE, stdout=PIPE, cwd=self.glove_dir)
 
-			self._remove_temp_file()
+			# self._remove_temp_file()
 			
 			for line in process.stdout:
 				logging.info(line.decode('utf-8').strip())
