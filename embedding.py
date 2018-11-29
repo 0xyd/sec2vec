@@ -392,7 +392,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		#20181229 arvis add variables
 		verbose=2, binary=2, cooccurrence_file='cooccurrence.bin'
 		,cooccurrence_shuf_file='cooccurrence.shuf.bin'
-		,builddir='build', glove_path='Glove/'
+		,builddir='build', glove_dir='Glove/'
 		):
 
 		super().__init__(
@@ -440,13 +440,13 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		self.cooccurrence_file = cooccurrence_file
 		self.cooccurrence_shuf_file = cooccurrence_shuf_file
 		self.builddir = builddir
-		self.glove_path = glove_path
+		self.glove_dir = glove_dir
 
 		assert self.sentences or self.corpus_file
 
 		if self.sentences and not self.corpus_file:
 			sentences = (corpus for corpus in KeywordCorpusIterator(self.kc))
-			f = open('./{}/temp_glove_sentence.txt'.format(self.glove_path), 'w+')
+			f = open('./{}/temp_glove_sentence.txt'.format(self.glove_dir), 'w+')
 
 			for sentence in sentences:
 				f.write(' '.join(sentence))
@@ -488,7 +488,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			else:
 
 				if not self.pre_trained_vec:
-					pre_trained_vec = _load_pretrained_model('./{}/{}.txt'.format(self.glove_path ,self.save_file))
+					pre_trained_vec = _load_pretrained_model('./{}/{}.txt'.format(self.glove_dir ,self.save_file))
 			
 				new_model = Word2Vec(size=self.size, min_count=self.min_count)
 				new_model.build_vocab(SentenceIterator(sentences))
@@ -528,18 +528,18 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 			process_list = []
 			for command in glove_command:
-				process = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, cwd=self.glove_path, shell=True)
+				process = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, cwd=self.glove_dir, shell=True)
 				for line in process.stdout:
 					logging.info(line.decode('utf-8').strip())
 
-			self.pre_trained_vec = self._load_glove_vec('./{}/{}.txt'.format(self.glove_path, self.save_file))
+			self.pre_trained_vec = self._load_glove_vec('./{}/{}.txt'.format(self.glove_dir, self.save_file))
 			self.wv = self.pre_trained_vec.wv
 
 			Sec2Vec._cal_kv(self)
 
 	def remove_temp_file(self):
 		if self.corpus_file == 'temp_glove_sentence.txt':
-			subprocess.run(['rm','-rf',self.corpus_file],cwd=self.glove_path)
+			subprocess.run(['rm','-rf',self.corpus_file],cwd=self.glove_dir)
 
 	# 20181128 Hannah Chen, add output SecGloVe method
 	def save(self, new_model_name, binary=False):
