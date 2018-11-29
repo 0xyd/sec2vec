@@ -113,6 +113,8 @@ class ConvNet(nn.Module):
 class CNNInfusion():
 	
 	def __init__(self, epochs, batch_size, embedding_size):
+		'''
+		'''
 		
 		self.iv = dict()
 		self.epochs = epochs
@@ -122,23 +124,21 @@ class CNNInfusion():
 		self.device = torch.device(
 			'cuda:0' if torch.cuda.is_available() else 'cpu')
 		
-	def _cal_word_index(self, embeddings):
+	def _build_word_index(self, shared_embeddings):
+		'''
+		'''
+		
+		words = set()
+		
+		for data in shared_embeddings.values():
+			for sentence in data['corpus']:
+				for token in sentence.split(' '):
+					words.add(token)
 
-		word_set = set()
-
-		for embedding in embeddings:
-			for corpus in embedding.kc.values():
-				for sentence in corpus:
-					for s in sentence.split(' '):
-						word_set.add(s)
-
-		word_index = dict(
-			(word, index) for index, word in enumerate(word_set))
-
-		return word_index
+		return words
 	
 	
-	def _get_shared_corpus(self, embeddings):
+	def _get_shared_keyword_corpus(self, embeddings):
 		'''
 		Get shared keywords and corpus across different embeddings.
 		'''
@@ -173,6 +173,7 @@ class CNNInfusion():
 			shared_embedding[keyword]['corpus'] = corpus
 			shared_embedding[keyword]['vector'] = []
 			
+			# Collect corpus which is embedding by different models
 			for e in embeddings:
 				shared_embedding[keyword]['vector'].append(e.kv[keyword])
 		
@@ -180,16 +181,17 @@ class CNNInfusion():
 		
 	
 	def _cnn_train(self, cnn, optimizer, word_index, embeddings):
+		'''
+		'''
 		
-		total_size = len(embeddings)
-		if '<unk>' not in word_index: word_index['<unk>'] = len(word_index)
-		num_words = len(word_index)
+		num_output_words = len(word_index)
+		num_keywords = len(embeddings)
 		
 		for epoch in tqdm_notebook(range(self.epochs)):
 			
 			batch = []
-			batch_count = 0
-			for i, (keyword, data) in tqdm_notebook(enumerate(embeddings.items()), total=total_size):
+			for keyword_index, (keyword, data) in tqdm_notebook(
+				enumerate(embeddings.items()), total=num_keywords):
 				
 				tokens = set(
 					[s for sentence in data['corpus'] for s in sentence.split(' ')])
@@ -198,71 +200,82 @@ class CNNInfusion():
 						for token in tokens]
 				batch.append((tokens, tokens_index, data['vector']))
 				
-				if len(batch) == batch_size:
-#                 if len(batch) == batch_size or i+batch_size > total_size:
+				if len(batch) == self.batch_size:
 					
 					feature_map = torch.tensor(
 						np.array([b[2] for b in batch])).to(
-							device, dtype=torch.float32)
+							self.device, dtype=torch.float32)
 					lbls = torch.tensor(
-						np.zeros((batch_size, num_words))).to(
-							device, dtype=torch.float32)
+						np.zeros((batch_size, num_output_words))).to(
+							self.device, dtype=torch.float32)
 			
 					for i, index in enumerate((b[1] for b in batch)):
 						lbls[i, index] = 1.
 					
 					outputs = cnn(feature_map)
-					loss = criterion(outputs, lbls)
+					loss = self.criterion(outputs, lbls)
 					optimizer.zero_grad()
 					loss.backward()
 					optimizer.step()
 					
-					if i + batch_size > total_size:
-						batch_count = total_size
-					else:
-						batch_count += 1
-						
-					if batch_count % 100 == 0:
+					if (keyword_index+1) % (self.batch_size*100) == 0:
 						print('Epoch [{}/{}], Step [{}/{}], Loss: {:.8f}' 
-							  .format(epoch+1, self.epochs, batch_count, total_size, loss.item()))
+							  .format(epoch+1, self.epochs, keyword_index, num_keywords, loss.item()))
 						
 					batch = []
 		
-	def train(self, word_batch, embeddings, channels,
+	def train(self, word_batch, embeddings, channels, seed=42,
 			  input_embedding_size=300, output_embedding_size=300, learning_rate=0.001):
 		'''
-		:params kvs:
-		:type kvs: list of dictionary
 		'''
 		
-		word_index = self._cal_word_index(embeddings)
 		num_embeddings = len(embeddings)
-		embeddings = self._get_shared_corpus(embeddings)
-
-		sub_word_index = dict()
-		for w_idx, w in enumerate(word_index.keys()):
-	
-			sub_word_index[w] = w_idx % word_batch
-	
-			if (w_idx+1) % word_batch == 0 and w_idx > 1:
+		data = self._get_shared_keyword_corpus(embeddings)
+		total_words = self._build_word_index(data)
+		total_words_num = len(total_words)
+		full_batch_num  = total_words_num // word_batch
+		last_batch_size = total_words_num % word_batch
 		
-				num_words = len(sub_word_index)
-				num_words = num_words if '<unk>' in sub_word_index else num_words+1 
+		# Initialize random seed
+		torch.manual_seed(seed)
+		torch.cuda.manual_seed(seed)
+
+		word_index = dict()
+		
+		for w_idx, w in tqdm_notebook(
+			enumerate(total_words), total=total_words_num):
+			
+			word_index[w] = w_idx % word_batch
+			word_index_size = len(word_index)
+			run_batch = False
+			
+			if word_index_size == word_batch: 
+				run_batch = True
+			elif w_idx >= full_batch_num*word_batch and word_index_size == last_batch_size:
+				run_batch = True
+				
+			if run_batch:
+			
+				if '<unk>' not in word_index: word_index['<unk>'] = len(word_index)
+				num_words = len(word_index)
 		
 				cnn = ConvNet(num_words, num_embeddings, channels,
 							  input_embedding_size, output_embedding_size).to(self.device)
+			
 				optimizer = torch.optim.Adam(cnn.parameters(), lr=learning_rate)
 
-				self._cnn_train(cnn, optimizer, sub_word_index, embeddings)
+				self._cnn_train(cnn, optimizer, word_index, data)
 				
-				for word, index in sub_word_index.items():
+				for word, index in word_index.items():
 					self.iv[word] = cnn.fc[-1].weight.data[index]
 				
 				del cnn; gc.collect()
+				del word_index; gc.collect()
 				torch._C._cuda_emptyCache()
+				
+				word_index = dict()
+				
 	
-				
-				
 	
 
 
