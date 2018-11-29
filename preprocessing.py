@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # import re
+from tqdm import tqdm
 from multiprocessing import Pool, cpu_count
 
 from flashtext import KeywordProcessor
@@ -112,7 +113,7 @@ class KeywordCorpusFactory():
 		partition_size = chunksize // self.corpus_worker
 		corpus_pool = Pool(self.corpus_worker)
 
-		for i, sentence in enumerate(sentences):
+		for i, sentence in tqdm(enumerate(sentences), total=len(sentences)):
 
 			if i % (chunksize-1) == 0 and i > 0:
 
@@ -161,6 +162,11 @@ class KeywordCorpusFactory():
 
 		keywords = list(self.kc.keys())
 		self._create(keywords, sentences, chunksize=256)
+
+		# 20181129 Hannah Chen, return error if keyword corpus is empty
+		if all(len(value) == 0 for value in self.kc.values()):
+			raise Exception("No keywords found in input sentences")
+
 		return self.kc
 
 		# for i, sentence in enumerate(sentences):
