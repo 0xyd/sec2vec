@@ -462,6 +462,12 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			for command in glove_command:
 				self.run_subprocess_command(*command)
 
+			
+
+			self.pre_trained_vec = self._load_glove_vec('{}/{}.txt'.format(self.glove_dir, self.save_file))
+			self.wv = self.pre_trained_vec.wv
+
+			self._cal_kv()
 			logging.info('end to embedding...')
 
 	def run_subprocess_command(self, command, input_path=None, output_path=None, input_enable=False, output_enable=False):
@@ -488,11 +494,5 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			os.remove('{}/{}'.format(self.glove_dir ,self.corpus_file))
 			
 
-	# 20181128 Hannah Chen, add output SecGloVe method
-	def save(self, new_model_name, binary=False):
-		self.model.wv.save_word2vec_format(new_model_name + '.bin', binary=binary)
-
-	def load(self, fname, binary=False):
-		return SecGloVe(pre_trained_vec=KeyedVectors.load_word2vec_format(fname, binary))
 
 
