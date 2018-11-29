@@ -1,5 +1,4 @@
 numpy
 gensim
 torch
-glove-python
 flashtext

@@ -1,4 +1,5 @@
 import logging
+import dill as pickle
 import subprocess
 from subprocess import Popen
 from subprocess import PIPE
@@ -356,7 +357,8 @@ class KeywordCorpusFactoryGloveMixin(Sec2Vec, KeywordCorpusFactory):
 		corpus_worker, corpus_chunksize, case_sensitive,
 		vocab_file, save_file, size, window, min_count, 
 		threads, iter, X_max, memory, pretrained_model_file,
-		output_file
+		output_file,
+		
 		):
 
 		KeywordCorpusFactory.__init__(self, keywords, case_sensitive, corpus_worker)
@@ -386,7 +388,11 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		case_sensitive=False, vocab_file='vocab.txt', save_file='vectors',
 		min_count=5, size=100, window=5, threads=3, iter=5, 
 		X_max=10, memory=4.0, pretrained_model_file=None, 
-		output_file='./glove/glove_vectors_gensim.vec'
+		output_file='./glove/glove_vectors_gensim.vec',
+		#20181229 arvis add variables
+		verbose=2, binary=2, cooccurrence_file='cooccurrence.bin'
+		,cooccurrence_shuf_file='cooccurrence.shuf.bin'
+		,builddir='build', glove_path='Glove/'
 		):
 
 		super().__init__(
@@ -402,7 +408,8 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			keywords, sentences, corpus_file, 
 			corpus_worker, corpus_chunksize, case_sensitive,
 			vocab_file, save_file, size, window, min_count, threads, 
-			iter, X_max, memory, pretrained_model_file, output_file)
+			iter, X_max, memory, pretrained_model_file, output_file,
+			)
 
 		self.keywords = keywords
 		self.sentences = sentences
@@ -427,11 +434,19 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		self.output_file = output_file
 		self.model = None
 
+		#20181229 arvis add variables
+		self.verbose = verbose
+		self.binary = binary
+		self.cooccurrence_file = cooccurrence_file
+		self.cooccurrence_shuf_file = cooccurrence_shuf_file
+		self.builddir = builddir
+		self.glove_path = glove_path
+
 		assert self.sentences or self.corpus_file
 
 		if self.sentences and not self.corpus_file:
 			sentences = (corpus for corpus in KeywordCorpusIterator(self.kc))
-			f = open('./glove/temp_glove_sentence.txt', 'w+')
+			f = open('./{}/temp_glove_sentence.txt'.format(self.glove_path), 'w+')
 
 			for sentence in sentences:
 				f.write(' '.join(sentence))
@@ -473,7 +488,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			else:
 
 				if not self.pre_trained_vec:
-					pre_trained_vec = _load_pretrained_model('./glove/{}.txt'.format(self.save_file))
+					pre_trained_vec = _load_pretrained_model('./{}/{}.txt'.format(self.glove_path ,self.save_file))
 			
 				new_model = Word2Vec(size=self.size, min_count=self.min_count)
 				new_model.build_vocab(SentenceIterator(sentences))
@@ -490,84 +505,43 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 		else:
 
-			argument = [
-				'./demo_v2.sh', '--Corpus_File={}'.format(self.corpus_file),
-				'--Save_File={}'.format(self.save_file), '--Vocab_File={}'.format(self.vocab_file),
-				'--Vocab_Min_Count={}'.format(self.min_count), '--Vector_Size={}'.format(self.size),
-				'--Window={}'.format(self.window), '--Threads={}'.format(self.threads),
-				'--iters={}'.format(self.iter), '--X_max={}'.format(self.X_max),
-				'--Memory={}'.format(self.memory)
-			]
-			process = subprocess.Popen(argument, stdin=PIPE, stdout=PIPE, cwd='glove/')
+			#20181229 arvis add variables
+			#initializing shell command
+			glove_command = ['make']	
 			
-			for line in process.stdout:
-				logging.info(line.decode('utf-8').strip())
+			glove_command.append('{}/vocab_count -min-count {} -verbose {} < {} > {}'\
+				.format(self.builddir, self.min_count, self.verbose, self.corpus_file, self.vocab_file))
+			
+			glove_command.append('{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {} < {} > {}'\
+				.format(self.builddir, self.memory, self.vocab_file, self.verbose, self.window,\
+						self.corpus_file, self.cooccurrence_file))
 
-			self.pre_trained_vec = self._load_glove_vec('./glove/{}.txt'.format(self.save_file))
+			glove_command.append('{}/shuffle -memory {} -verbose {} < {} > {}'\
+				.format(self.builddir, self.memory, self.verbose, self.cooccurrence_file, self.cooccurrence_shuf_file))
+
+			glove_command.append('{}/glove -save-file {} -threads {} -input-file {} \
+				-x-max {} -iter {} -vector-size {} -binary {} -vocab-file {} -verbose {}'\
+				.format(self.builddir, self.save_file, self.threads, self.cooccurrence_shuf_file,\
+						self.X_max, self.iter, self.size, self.binary, self.vocab_file, self.verbose))
+
+			logging.info('end to embedding...')
+
+			process_list = []
+			for command in glove_command:
+				process = subprocess.Popen(command, stdin=PIPE, stdout=PIPE, cwd=self.glove_path, shell=True)
+				for line in process.stdout:
+					logging.info(line.decode('utf-8').strip())
+
+			self.pre_trained_vec = self._load_glove_vec('./{}/{}.txt'.format(self.glove_path, self.save_file))
 			self.wv = self.pre_trained_vec.wv
 
 			Sec2Vec._cal_kv(self)
 
-	# def train_glove_embed(self):
-
-	# 	if self.update and self.pretrained_model_file:  #是否需要update
-
-	# 		if self.keywords:
-
-
-	# 		if self.model:
-	# 			self.model.build_vocab(SentenceIterator(sentences), update=True)
-	# 			self.model.train(sentences, total_examples=self.model.corpus_count, \
-	# 								epochs=self.model.epochs)
-
-	# 		if isinstance(self.sentences, Iterator):
-	# 			raise ValueError(
-	# 				'sentences accpets list of str or list of tokens only.')
-
-	# 		pre_trained_vec = _load_pretrained_model(self.pretrained_model_file)
-			
-	# 		new_model = Word2Vec(size=self.size, min_count=self.min_count)
-	# 		new_model.build_vocab(sentences)
-	# 		total_examples = new_model.corpus_count
-
-	# 		new_model.build_vocab([list(pre_trained_vec.vocab.keys())], update=self.update)
-	# 		new_model.intersect_word2vec_format(self.pretrained_model_file, binary=False, lockf=1.0)
-	# 		new_model.train(sentences, total_examples=total_examples, epochs=self.iters)
-
-	# 		self._cal_kv(new_model)
-
-	# 		# 20181128 Hannah Chen
-	# 		new_model.wv.save_word2vec_format(self.new_model_name + '.bin')
-	# 		# new_model.save(self.new_model_name + '.bin')
-
-	# 	else:
-
-	# 		argument = [
-	# 			'./demo_v2.sh', '--Corpus_File={}'.format(self.corpus_file),
-	# 			'--Save_File={}'.format(self.save_file), '--Vocab_File={}'.format(self.vocab_file),
-	# 			'--Vocab_Min_Count={}'.format(self.min_count), '--Vector_Size={}'.format(self.size),
-	# 			'--Window={}'.format(self.window), '--Threads={}'.format(self.threads),
-	# 			'--iters={}'.format(self.iters), '--X_max={}'.format(self.X_max),
-	# 			'--Memory={}'.format(self.memory)
-	# 		]
-	# 		process = subprocess.Popen(argument, stdin=PIPE, stdout=PIPE, cwd='glove/')
-			
-	# 		for line in process.stdout:
-	# 			logging.info(line.decode('utf-8').strip())
-
-	# 		pre_trained_vec = _load_pretrained_model('./glove/vector.txt')
-
-	# 		self._cal_kv(pre_trained_vec)
-
 	def remove_temp_file(self):
 		if self.corpus_file == 'temp_glove_sentence.txt':
-			subprocess.run(['rm','-rf',self.corpus_file],cwd='glove/')
+			subprocess.run(['rm','-rf',self.corpus_file],cwd=self.glove_path)
 
 	# 20181128 Hannah Chen, add output SecGloVe method
 	def save(self, new_model_name, binary=False):
 		self.model.wv.save_word2vec_format(new_model_name + '.bin', binary=binary)
-
-		
-
-
 
