@@ -19,9 +19,14 @@ This tool is a modified implementation of [EmTaggeR](https://arxiv.org/pdf/1712.
 	pip install -r requirement
 ```
 
-## Use Stanford glove-master
+## (Optional) Stanford Glove
 
-No need to install glove-python, we rewrite demo.sh to demo_v2.sh, parse commend line argument in bash with python popen and run glove embeeding
+sec2vec provides glove package wrapper. Please put the glove folder in the correct path for usage with following steps.
+
+1. Download the code from [Stanford Glove](https://nlp.stanford.edu/projects/glove/)
+2. Unzipped the zipped file
+3. Put the unzipped file to the directory of your working project
+4. Enter GloVe folder and compile it by *make*
 
 
 
