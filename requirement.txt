@@ -3,3 +3,4 @@ gensim
 torch
 glove-python
 flashtext
+dill
