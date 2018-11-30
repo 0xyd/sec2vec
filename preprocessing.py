@@ -5,8 +5,32 @@ from multiprocessing import Pool, cpu_count
 
 from flashtext import KeywordProcessor
 
-from embedding import SentenceIterator
 
+class SentenceIterator():
+
+	def __init__(self, sentences): 
+		self.iterable = (s for s in sentences)
+		
+		# 20181130 Hannah Chen, add length for iterable
+		self.length = sum(1 for _ in sentences)
+
+	def __iter__(self): return self
+
+	def __next__(self):
+
+		s = next(self.iterable)
+
+		if isinstance(s, list):
+			return s
+		elif isinstance(s, str):
+			return s.split(' ')
+		else:
+			return ValueError(
+				'Only String or list of string are acceptable.')
+
+	# 20181130 Hannah Chen, add length for iterable
+	def __len__(self):
+		return self.length
 
 # def mp_extract_keywords(
 # 	keywords, sentences, case_sensitive=False):
@@ -115,7 +139,7 @@ class KeywordCorpusFactory():
 		partition_size = chunksize // self.corpus_worker
 		corpus_pool = Pool(self.corpus_worker)
 
-		for i, sentence in tqdm(enumerate(sentences), total=len(sentences)):
+		for i, sentence in tqdm(enumerate(sentences), total=sentences.__len__()):
 
 			if i % (chunksize-1) == 0 and i > 0:
 
@@ -165,12 +189,12 @@ class KeywordCorpusFactory():
 		keywords = list(self.kc.keys())
 
 		# 20181130 Hannah Chen, create with sentence iterator
-		self._create(keywords, SentenceIterator(sentences), chunksize=chunksize)
+		self._create(keywords, sentences, chunksize=chunksize)
 		# self._create(keywords, sentences, chunksize=256)
 
 		# 20181129 Hannah Chen, return error if keyword corpus is empty
-		if all(len(value) == 0 for value in self.kc.values()):
-			raise Exception("No keywords found in input sentences")
+		# if all(len(value) == 0 for value in self.kc.values()):
+		# 	raise Exception("No keywords found in input sentences")
 
 		return self.kc
 

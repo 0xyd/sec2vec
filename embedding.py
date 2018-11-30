@@ -18,6 +18,7 @@ from gensim.models import Word2Vec, FastText
 from gensim.scripts.glove2word2vec import glove2word2vec
 
 from logger import EpochLogger
+from preprocessing import SentenceIterator
 from preprocessing import KeywordCorpusFactory
 from preprocessing import KeywordCorpusIterator
 
@@ -25,28 +26,37 @@ from preprocessing import KeywordCorpusIterator
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 
-class SentenceIterator():
+# class SentenceIterator():
 
-	def __init__(self, sentences): self.iterable = (s for s in sentences)
+# 	def __init__(self, sentences): self.iterable = (s for s in sentences)
 
-	def __iter__(self): return self
+# 	def __iter__(self): return self
 
-	def __next__(self):
+# 	def __next__(self):
 
-		s = next(self.iterable)
+# 		s = next(self.iterable)
 
-		if isinstance(s, list):
-			return s
-		elif isinstance(s, str):
-			return s.split(' ')
-		else:
-			return ValueError(
-				'Only String or list of string are acceptable.')
+# 		if isinstance(s, list):
+# 			return s
+# 		elif isinstance(s, str):
+# 			return s.split(' ')
+# 		else:
+# 			return ValueError(
+# 				'Only String or list of string are acceptable.')
+
+# 	# 20181130 Hannah Chen, add length for iterable
+# 	def __len__(self):
+# 		return sum(1 for _ in self.iterable)
 
 class Sec2Vec():
 
 
-	def __init__(self, sentences):
+	def __init__(self, sentences, corpus_file):
+
+		# 20181130 LIN, Y.D.: Error Message be shared across embeddings.
+		if sentences is None and corpus_file is None:
+			raise ValueError(
+				'One of parameters, sentences and corpus_file should not be None.')
 
 		# 20181130 LIN, Y.D.: Save all sentences for training
 		if isinstance(sentences, Iterator):
@@ -57,6 +67,9 @@ class Sec2Vec():
 
 		else:
 			self.sentences = sentences
+
+		if sentences is None:
+			self.corpus_file = corpus_file
 
 	def __getitem__(self, word):
 
@@ -159,7 +172,6 @@ class Sec2Vec():
 			if not compute_loss:
 				self.wv.vectors_vocab = np.vstack((self.wv.vectors_vocab, self.wv['<unk>']))
 
-
 		self._cal_kv()
 
 	def save_embed(self, output_file_name):
@@ -183,11 +195,13 @@ class KeywordCorpusFactoryWord2VecMixin(Sec2Vec, Word2Vec, KeywordCorpusFactory)
 		sorted_vocab, batch_words, compute_loss, 
 		max_final_vocab):
 		
-		Sec2Vec.__init__(self, sentences)
+		Sec2Vec.__init__(self, sentences, corpus_file)
 		KeywordCorpusFactory.__init__(self, keywords, case_sensitive, corpus_worker)
 
+		# 20181130 Hannah Chen
+		self.kc = self.create(SentenceIterator(self.sentences), corpus_chunksize)
 		# 20181130 LIN, Y.D.: Save all sentences for training
-		self.kc = self.create(self.sentences, corpus_chunksize)
+		# self.kc = self.create(self.sentences, corpus_chunksize)
 		# self.kc = self.create(sentences, corpus_chunksize)
 
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
@@ -224,13 +238,15 @@ class KeywordCorpusFactoryFasttextMixin(Sec2Vec, FastText, KeywordCorpusFactory)
 		sorted_vocab=1, batch_words=10000):
 
 		# 20181130 LIN, Y.D.: Save all sentences for training
-		Sec2Vec.__init__(self, sentences)
+		Sec2Vec.__init__(self, sentences, corpus_file)
 
 		# 20181126 Hannah Chen, modified variable: corpus_worker
 		KeywordCorpusFactory.__init__(self, keywords, case_sensitive, corpus_worker)
 
+		# 20181130 Hannah Chen
+		self.kc = self.create(SentenceIterator(self.sentences), corpus_chunksize)
 		# 20181130 LIN, Y.D.: Save all sentences for training
-		self.kc = self.create(self.sentences, corpus_chunksize)
+		# self.kc = self.create(self.sentences, corpus_chunksize)
 		# self.kc = self.create(sentences, corpus_chunksize)
 
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
@@ -275,7 +291,7 @@ class SecWord2Vec(KeywordCorpusFactoryWord2VecMixin):
 			batch_words, compute_loss, max_final_vocab)
 
 		self.build_vocab(
-			(corpus for corpus in KeywordCorpusIterator(self.kc)))
+			(corpus for corpus in SentenceIterator(self.sentences)))
 
 class SecFastText(KeywordCorpusFactoryFasttextMixin):
 
@@ -303,7 +319,7 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 			sorted_vocab, batch_words)
 
 		self.build_vocab(
-			(corpus for corpus in KeywordCorpusIterator(self.kc)))
+			(corpus for corpus in SentenceIterator(self.sentences)))
 
 
 class KeywordCorpusFactoryGloveMixin(Sec2Vec, KeywordCorpusFactory):
@@ -317,16 +333,23 @@ class KeywordCorpusFactoryGloveMixin(Sec2Vec, KeywordCorpusFactory):
 
 		# 20181128 Hannah Chen, modify class variables
 		self, keywords, sentences, corpus_file, 
-		corpus_worker, corpus_chunksize, case_sensitive,
-		vocab_file, save_file, size, window, min_count, 
-		threads, iter, X_max, memory, pretrained_model_file,
-		output_file):
+		corpus_worker, corpus_chunksize, case_sensitive
 
+		# 20181130. LIN, Y.D. Seems no use in Mixin.
+		# vocab_file, save_file, size, window, min_count, 
+		# threads, iter, X_max, memory, pretrained_model_file,
+		# output_file
+		):
+
+		Sec2Vec.__init__(self, sentences, corpus_file)
 		KeywordCorpusFactory.__init__(self, keywords, case_sensitive, corpus_worker)
-		self.kc = self.create(sentences, corpus_chunksize)
+
+		# 20181130 Hannah Chen
+		self.kc = self.create(SentenceIterator(self.sentences), corpus_chunksize)
+		# self.kc = self.create(sentences, corpus_chunksize)
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
 		self.keyword_count = dict(((keyword, 0) for keyword in self.kc.keys()))
-		self.corpus_chunksize = corpus_chunksize    
+		self.corpus_chunksize = corpus_chunksize
 
 
 #11/24 add 
@@ -348,14 +371,19 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		X_max=10, memory=4.0, pretrained_model_file=None, 
 		output_file='./glove/glove_vectors_gensim.vec',
 		#20181229 arvis add variables
-		verbose=2, binary=2, cooccurrence_file='cooccurrence.bin'
-		,cooccurrence_shuf_file='cooccurrence.shuf.bin'
-		,builddir='build', glove_dir='./GloVe-1.2/'):
+		verbose=2, binary=2, cooccurrence_file='cooccurrence.bin',
+		cooccurrence_shuf_file='cooccurrence.shuf.bin' ,
+		builddir='build', glove_dir='Glove/'
+		):
 
+		# 20181130 LIN, Y.D.
+		super().__init__(
+			keywords, sentences, corpus_file, 
+			corpus_worker, corpus_chunksize, case_sensitive)
 
-		self.keywords = keywords
-		self.sentences = sentences
-		self.corpus_file = corpus_file
+		# self.keywords = keywords
+		# self.sentences = sentences
+		# self.corpus_file = corpus_file
 		self.corpus_worker = corpus_worker
 		self.corpus_chunksize = corpus_chunksize
 		self.case_sensitive = case_sensitive
@@ -384,7 +412,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		self.builddir = builddir
 		self.glove_dir = glove_dir
 
-		assert self.sentences or self.corpus_file
+		# assert self.sentences or self.corpus_file
 
 		if self.sentences and not self.corpus_file:
 
@@ -396,24 +424,23 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 				f.write('\n')
 
 			self.corpus_file = 'temp_glove_sentence.txt'
-
 			f.close()
+
 		elif self.corpus_file:
+
 			os.system('cp ./{} ./{}/'.format(self.corpus_file, self.glove_dir))
 			f = open('./{}'.format(self.corpus_file), 'r')
 			self.sentences = f.readlines()
 			
-		super().__init__(
-			# 20181128 Hannah Chen, modify class variables
-			# 20181129 arvis modify to self
-			self.keywords, self.sentences, self.corpus_file, 
-			self.corpus_worker, self.corpus_chunksize, self.case_sensitive,
-			self.vocab_file, self.save_file, self.size, self.window, self.min_count, self.threads, 
-			self.iter, self.X_max, self.memory, self.pretrained_model_file, self.output_file,
-			)
-
-
-		
+		# 20181130 LIN, Y.D. Parent should be init at very beginning.
+		# super().__init__(
+		# 	# 20181128 Hannah Chen, modify class variables
+		# 	# 20181129 arvis modify to self
+		# 	self.keywords, self.sentences, self.corpus_file, 
+		# 	self.corpus_worker, self.corpus_chunksize, self.case_sensitive,
+		# 	self.vocab_file, self.save_file, self.size, self.window, self.min_count, self.threads, 
+		# 	self.iter, self.X_max, self.memory, self.pretrained_model_file, self.output_file,
+		# 	)
 
 
 	# 20181128 Hannah Chen, add method for loading word vectors generated by GloVe
@@ -467,27 +494,29 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 			#20181229 arvis add variables
 			#initializing shell command
-			step1_command = '{}/vocab_count -min-count {} -verbose {} '\
-							 .format(self.builddir, self.min_count, self.verbose)
-			
-			step2_command = '{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {}'\
-							.format(self.builddir, self.memory, self.vocab_file, self.verbose, self.window)
-			
-			step3_command = '{}/shuffle -memory {} -verbose {} '\
-							.format(self.builddir, self.memory, self.verbose, )
-			
-			step4_command ='{}/glove -save-file {} -threads {} -input-file {} \
+
+			# 20181130 LIN, Y.D. Update Naming
+			vocab_count_cmd = '{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {}' \
+							  .format(self.builddir, self.memory, self.vocab_file, self.verbose, self.window)
+
+			cooccur_cmd = '{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {}' \
+						  .format(self.builddir, self.memory, self.vocab_file, self.verbose, self.window)
+
+			shuffle_cmd = '{}/shuffle -memory {} -verbose {}'\
+						  .format(self.builddir, self.memory, self.verbose)
+
+			save_file_cmd = '{}/glove -save-file {} -threads {} -input-file {} \
 							-x-max {} -iter {} -vector-size {} -binary {} -vocab-file {} -verbose {}'\
 							.format(self.builddir, self.save_file, self.threads, self.cooccurrence_shuf_file,\
 									self.X_max, self.iter, self.size, self.binary, self.vocab_file, self.verbose)
-			
-			glove_command = [('make', None , None, False, False),
-							(step1_command, self.corpus_file, self.vocab_file, True, True),
-							(step2_command, self.corpus_file, self.cooccurrence_file, True, True),
-							(step3_command, self.cooccurrence_file, self.cooccurrence_shuf_file, True, True),
-							(step4_command, None, None, False, False)
 
-							]	
+			glove_command = [
+				('make', None , None, False, False),
+				(vocab_count_cmd, self.corpus_file, self.vocab_file, True, True),
+				(cooccur_cmd, self.corpus_file, self.cooccurrence_file, True, True),
+				(shuffle_cmd, self.cooccurrence_file, self.cooccurrence_shuf_file, True, True),
+				(save_file_cmd, None, None, False, False) 
+			]
 
 			for command in glove_command:
 				self._run_subprocess_command(*command)
@@ -500,7 +529,12 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			self._cal_kv()
 			logging.info('end to embedding...')
 
-	def _run_subprocess_command(self, command, input_path=None, output_path=None, input_enable=False, output_enable=False):
+
+	def _run_subprocess_command(
+		self, command, 
+		input_path=None, output_path=None, 
+		input_enable=False, output_enable=False):
+	# def run_subprocess_command(self, command, input_path=None, output_path=None, input_enable=False, output_enable=False):
 
 		if input_enable == output_enable == True:
 			input_file = open(self.glove_dir + input_path)
@@ -510,7 +544,6 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 				p.wait()
 				output_file.flush()
 				output_file.close()
-				
 
 		else:
 			with Popen(shlex.split(command), stdin=PIPE, stdout=PIPE, cwd=self.glove_dir) as p:
