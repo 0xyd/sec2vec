@@ -414,7 +414,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 		# assert self.sentences or self.corpus_file
 
-		if self.sentences and not self.corpus_file:
+		if self.sentences:
 
 			f = open('{}/temp_glove_sentence.txt'.format(self.glove_dir), 'w+')
 
