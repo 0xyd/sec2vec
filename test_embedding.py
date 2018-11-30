@@ -215,8 +215,6 @@ class TestSecFastText():
 				['This is a hello world example again']],
 			update=True)
 
-		print(ft.kv['is'])
-
 		assert not np.array_equal(old_is_vec, ft.kv['is'])
 		del ft; gc.collect()
 
@@ -288,8 +286,6 @@ class TestSecGloVe():
 				['This is a hello world example.'],
 				['This is a hello world example again']],
 			update=True)
-
-		print(gv.kv['is'])
 
 		assert not np.array_equal(old_is_vec, gv.kv['is'])
 		del gv; gc.collect()
