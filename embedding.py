@@ -8,6 +8,7 @@ from multiprocessing import cpu_count
 # import tqdm
 import numpy as np
 #from glove import Glove, Corpus
+import dill as pickle
 from gensim.models import KeyedVectors
 from gensim.models import Word2Vec, FastText
 from gensim.scripts.glove2word2vec import glove2word2vec
