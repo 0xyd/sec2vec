@@ -23,7 +23,7 @@ from preprocessing import KeywordCorpusFactory
 from preprocessing import KeywordCorpusIterator
 
 
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+# logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 class Sec2Vec():
 
@@ -91,15 +91,23 @@ class Sec2Vec():
 	# 20181130 LIN, Y.D. Move from KeywordCorpusFactory
 	def add_keyword_corpus(self, keyword, sentences):
 
-		if keyword in self.kc:
+		if instance(sentences, list):
 
-			for s in sentences:
-				self.kc[keyword].add(s)
-				self.sentences.append(s)
+			if keyword in self.kc:
+
+				for s in sentences:
+					self.kc[keyword].add(s)
+					self.sentences = list(set(self.sentences.append(s)))
+					# self.sentences = self.sentences.append(s)
+
+			else:
+				self.kc[keyword] = set(sentences)
+				self.sentences = list(set(self.sentences.extend(sentences)))
+				# self.sentences = self.sentences.extend(sentences)
 
 		else:
-			self.kc[keyword] = set(sentences)
-			self.sentences.extend(sentences)
+			raise ValueError(
+					'sentences accepts list only.')
 
 
 	def train_embed(
