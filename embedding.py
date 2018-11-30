@@ -1,5 +1,6 @@
 import logging
 import subprocess
+from itertools  import cycle
 from subprocess import Popen
 from subprocess import PIPE
 from collections import Iterator
@@ -41,7 +42,17 @@ class SentenceIterator():
 class Sec2Vec():
 
 
-	def __init__(self): pass
+	def __init__(self, sentences):
+
+		# 20181130 LIN, Y.D.: Save all sentences for training
+		if isinstance(sentences, Iterator):
+
+			self.sentences = []
+			for s in sentences: 
+				self.sentences.append(s)
+
+		else:
+			self.sentences = sentences
 
 	def __getitem__(self, word):
 
@@ -52,19 +63,10 @@ class Sec2Vec():
 
 	def _get_vec(self, token):
 
-		# if hasattr(self, 'wv'):
-
 		if token in self.wv:
 			return self.wv[token]
 		else:
 			return self.wv['<unk>']
-
-		# else:
-
-		# 	if token in self.kv:
-		# 		return self.kv[token]
-		# 	else:
-		# 		return self.kv['<unk>']
 
 	def _cal_kv(self):
 
@@ -129,7 +131,9 @@ class Sec2Vec():
 			#(FastText does not contain this variable)
 			if compute_loss:
 				self.train(
-					KeywordCorpusIterator(self.kc), 
+					# 20181130 LIN, Y.D. Train with all corpus
+					SentenceIterator(self.sentences),
+					# KeywordCorpusIterator(self.kc), 
 					corpus_file, total_examples, total_words, epochs, 
 					start_alpha, end_alpha, word_count, compute_loss,
 					queue_factor, report_delay)
@@ -141,7 +145,9 @@ class Sec2Vec():
 				# self.wv.vectors_vocab = np.vstack((self.wv.vectors_vocab, self.wv['unk']))
 
 				self.train(
-					KeywordCorpusIterator(self.kc), 
+					# 20181130 LIN, Y.D. Train with all corpus
+					SentenceIterator(self.sentences),
+					# KeywordCorpusIterator(self.kc), 
 					corpus_file, total_examples, total_words, epochs, 
 					start_alpha, end_alpha, word_count,
 					queue_factor, report_delay)
@@ -171,8 +177,13 @@ class KeywordCorpusFactoryWord2VecMixin(Sec2Vec, Word2Vec, KeywordCorpusFactory)
 		sorted_vocab, batch_words, compute_loss, 
 		max_final_vocab):
 		
+		Sec2Vec.__init__(self, sentences)
 		KeywordCorpusFactory.__init__(self, keywords, case_sensitive, corpus_worker)
-		self.kc = self.create(sentences, corpus_chunksize)
+
+		# 20181130 LIN, Y.D.: Save all sentences for training
+		self.kc = self.create(self.sentences, corpus_chunksize)
+		# self.kc = self.create(sentences, corpus_chunksize)
+
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
 		self.keyword_count = dict(((keyword, 0) for keyword in self.kc.keys()))
 		self.corpus_chunksize = corpus_chunksize
@@ -206,10 +217,16 @@ class KeywordCorpusFactoryFasttextMixin(Sec2Vec, FastText, KeywordCorpusFactory)
 		iter=5, null_word=0, trim_rule=None, 
 		sorted_vocab=1, batch_words=10000):
 
+		# 20181130 LIN, Y.D.: Save all sentences for training
+		Sec2Vec.__init__(self, sentences)
 
 		# 20181126 Hannah Chen, modified variable: corpus_worker
 		KeywordCorpusFactory.__init__(self, keywords, case_sensitive, corpus_worker)
-		self.kc = self.create(sentences, corpus_chunksize)
+
+		# 20181130 LIN, Y.D.: Save all sentences for training
+		self.kc = self.create(self.sentences, corpus_chunksize)
+		# self.kc = self.create(sentences, corpus_chunksize)
+
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
 
 		self.keyword_count = dict(((keyword, 0) for keyword in self.kc.keys()))
