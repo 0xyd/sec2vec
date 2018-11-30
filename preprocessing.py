@@ -1,9 +1,36 @@
 # -*- coding: utf-8 -*-
 # import re
+from tqdm import tqdm
 from multiprocessing import Pool, cpu_count
 
 from flashtext import KeywordProcessor
 
+
+class SentenceIterator():
+
+	def __init__(self, sentences): 
+		self.iterable = (s for s in sentences)
+
+		# 20181130 Hannah Chen, add length for iterable
+		self.length = sum(1 for _ in sentences)
+
+	def __iter__(self): return self
+
+	def __next__(self):
+
+		s = next(self.iterable)
+
+		if isinstance(s, list):
+			return s
+		elif isinstance(s, str):
+			return s.split(' ')
+		else:
+			return ValueError(
+				'Only String or list of string are acceptable.')
+
+	# 20181130 Hannah Chen, add length for iterable
+	def __len__(self):
+		return self.length
 
 # def mp_extract_keywords(
 # 	keywords, sentences, case_sensitive=False):
@@ -106,13 +133,13 @@ class KeywordCorpusFactory():
 			self.kc[keyword] = set()
 			# self.kc[keyword] = []
 
-	def _create(self, keywords, sentences, chunksize=256):
+	def _create(self, keywords, sentences, chunksize=5000):
 
 		sentences_chunk = []
 		partition_size = chunksize // self.corpus_worker
 		corpus_pool = Pool(self.corpus_worker)
 
-		for i, sentence in enumerate(sentences):
+		for i, sentence in tqdm(enumerate(sentences), total=sentences.__len__()):
 
 			if i % (chunksize-1) == 0 and i > 0:
 
@@ -157,10 +184,18 @@ class KeywordCorpusFactory():
 				# self.kc[keyword].extend(tokens)
 				# self.kc[keyword].append(tokens)
 
-	def create(self, sentences, chunksize=256):
+	def create(self, sentences, chunksize=5000):
 
 		keywords = list(self.kc.keys())
-		self._create(keywords, sentences, chunksize=256)
+
+		# 20181130 Hannah Chen, create with sentence iterator
+		self._create(keywords, sentences, chunksize=chunksize)
+		# self._create(keywords, sentences, chunksize=256)
+
+		# 20181129 Hannah Chen, return error if keyword corpus is empty
+		# if all(len(value) == 0 for value in self.kc.values()):
+		# 	raise Exception("No keywords found in input sentences")
+
 		return self.kc
 
 		# for i, sentence in enumerate(sentences):
@@ -210,7 +245,7 @@ class KeywordCorpusFactory():
 	# 		else:
 	# 			self.kc[keyword] = []
 
-	def update(self, keywords=None, sentences=None, chunksize=256):
+	def update(self, keywords=None, sentences=None, chunksize=5000):
 
 		if keywords is None and sentences is None:
 			raise ValueError(

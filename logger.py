@@ -13,7 +13,7 @@ class EpochLogger(CallbackAny2Vec):
 	def on_epoch_end(self, model):
 
 		# 20181126 Hannah Chen, print training loss if compute_loss is True
-		if self.compute_loss:
+		if hasattr(self, 'compute_loss'):
 			print("Epoch #{} end - training loss: {}".format(self.epoch, model.get_latest_training_loss()))
 		else:
 			print("Epoch #{} end".format(self.epoch))	

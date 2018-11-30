@@ -18,7 +18,7 @@ sample_sentences = [
 	['Are', 'there', 'any', 'examples']
 ]
 
-keywords = ['hello', 'keywords']
+keywords = ['hello', 'world']
 
 wiki_keywords = [
 	'anarchism', 'philosophy', 'autism', 'communication', 'autistic', 
@@ -131,6 +131,22 @@ class TestSecWord2Vec():
 
 		del w2v; gc.collect()
 
+	# def test_save_embed(self):
+
+	# 	global keywords
+	# 	global sample_sentences
+
+	# 	w2v = SecWord2Vec(keywords, sample_sentences, size=10, window=10, iter=1)
+	# 	w2v.save_embed('test_w2v.pkl')
+
+	# 	assert os.path.isfile('test_w2v.pkl')
+
+	# def test_load_embed(self):
+
+	# 	w2v = w2v.load_embed('test_w2v.pkl')
+
+	# 	assert w2v
+
 
 class TestSecFastText():
 
@@ -205,75 +221,75 @@ class TestSecFastText():
 		del ft; gc.collect()
 
 
-# class TestSecGlove():
+class TestSecGloVe():
 
-# 	def test_init(self):
+	def test_init(self):
 
-# 		global keywords
-# 		global wiki_keywords
-# 		global sample_sentences
+		global keywords
+		global wiki_keywords
+		global sample_sentences
 
-# 		gv = SecGloVe(keywords, sample_sentences, size=10, window=5, iter=1)
-# 		assert True
-# 		del gv; gc.collect()
+		gv = SecGloVe(keywords, sample_sentences, size=10, window=5, iter=1)
+		assert True
+		del gv; gc.collect()
 
-# 		wc = WiKiCorpusIterator(100, return_str=True)
-# 		gv = SecGloVe(wiki_keywords, wc, size=10, window=10, iter=1)
-# 		assert True
-# 		del gv; gc.collect()
+		wc = WiKiCorpusIterator(100, return_str=True)
+		gv = SecGloVe(wiki_keywords, wc, size=10, window=10, iter=1)
+		assert True
+		del gv; gc.collect()
 
-# 	def test_train_glove_embed(self):
+	def test_train_embed(self):
 
-# 		global wiki_keywords
+		global wiki_keywords
 
-# 		wc  = WiKiCorpusIterator(10, return_str=True)
-# 		gv = SecGloVe(wiki_keywords, wc, size=10, window=10, iter=1, min_count=1)
-# 		gv.train_embed()
+		wc  = WiKiCorpusIterator(10, return_str=True)
+		gv = SecGloVe(wiki_keywords, wc, size=10, window=10, iter=1, min_count=1)
+		gv.train_embed()
 
-# 		assert gv.kc is not None
-# 		assert gv['the'] is not None
-# 		assert gv.kc['is'] is not None
+		assert gv.kc is not None
+		assert gv['the'] is not None
+		assert gv.kc['is'] is not None
 
-# 		old_is_vec = gv.kc['is']
+		old_is_vec = gv.kc['is']
 
-# 		for keyword in wiki_keywords:
-# 			assert gv.kv[keyword].shape[0] == 10
-# 			assert np.any(gv.kv[keyword]) < 100
+		for keyword in wiki_keywords:
+			assert gv.kv[keyword].shape[0] == 10
+			assert np.any(gv.kv[keyword]) < 100
 
-# 		# # update with new sentences
-# 		# gv.train_embed(
-# 		# 	sentences=[
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example.'],
-# 		# 		['This', 'is', 'a', 'hello', 'world', 'example', 'again']],
-# 		# 	update=True)
+		# update with new sentences
+		gv.train_embed(
+			sentences=[
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example.'],
+				['This', 'is', 'a', 'hello', 'world', 'example', 'again']],
+			update=True)
 
-# 		# assert gv['example.'] is not None
+		assert gv['example.'] is not None
 
-# 		# gv.train_embed(
-# 		# 	sentences=[
-# 		# 		['This is a hello world example.'],
-# 		# 		['This is a hello world example.'],
-# 		# 		['This is a hello world example.'],
-# 		# 		['This is a hello world example.'],
-# 		# 		['This is a hello world example.'],
-# 		# 		['This is a hello world example.'],
-# 		# 		['This is a hello world example.'],
-# 		# 		['This is a hello world example.'],
-# 		# 		['This is a hello world example.'],
-# 		# 		['This is a hello world example.'],
-# 		# 		['This is a hello world example again']],
-# 		# 	update=True)
+		gv.train_embed(
+			sentences=[
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example.'],
+				['This is a hello world example again']],
+			update=True)
 
-# 		# print(gv.kv['is'])
+		print(gv.kv['is'])
 
-# 		# assert not np.array_equal(old_is_vec, ft.kv['is'])
-# 		# del gv; gc.collect()
+		assert not np.array_equal(old_is_vec, gv.kv['is'])
+		del gv; gc.collect()

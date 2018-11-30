@@ -4,3 +4,4 @@ gensim
 torch
 tqdm
 flashtext
+dill
