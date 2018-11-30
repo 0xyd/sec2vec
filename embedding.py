@@ -21,9 +21,11 @@ from logger import EpochLogger
 from preprocessing import SentenceIterator
 from preprocessing import KeywordCorpusFactory
 from preprocessing import KeywordCorpusIterator
+from decorator import assert_sentences
 
 
 # logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+
 
 class Sec2Vec():
 
@@ -119,9 +121,9 @@ class Sec2Vec():
 					'sentences accepts list only.')
 
 
-
+	@assert_sentences
 	def train_embed(
-		self, keywords=None, sentences=None, corpus_file=None,
+		self, keywords, sentences, corpus_file=None,
 		# self, keywords=None, sentences=None, corpus_file=None, update=False,
 		total_examples=None, total_words=None,  epochs=None, 
 		start_alpha=None, end_alpha=None, word_count=0, 
@@ -134,31 +136,39 @@ class Sec2Vec():
 		compute_loss = self.compute_loss if hasattr(self, 'compute_loss') else False
 
 		if keywords or sentences:
-		# if update:
 
 			if isinstance(sentences, Iterator):
 				raise ValueError(
 					'sentences accpets list of str or list of tokens only.')
 
-			self.build_vocab(SentenceIterator(sentences), update=True)
-			self.update(keywords, SentenceIterator(sentences))
+			# 20181201 LIN,Y.D. Fix Bug
+			if sentences:
 
-			# FastText does not contain this variable
-			if compute_loss:
-				self.train(
-					SentenceIterator(self.sentences), corpus_file, 
-					total_examples, total_words, epochs, 
-					start_alpha, end_alpha, word_count, 
-					queue_factor, report_delay, compute_loss)
+				self.build_vocab(SentenceIterator(sentences), update=True)
+				self.update(keywords, SentenceIterator(sentences))
+
+				# FastText does not contain this variable
+				if compute_loss:
+					self.train(
+						SentenceIterator(sentences), corpus_file, 
+						total_examples, total_words, epochs, 
+						start_alpha, end_alpha, word_count, 
+						queue_factor, report_delay, compute_loss)
+				else:
+					self.train(
+						SentenceIterator(sentences), corpus_file, 
+						total_examples, total_words, epochs, 
+						start_alpha, end_alpha, word_count, 
+						queue_factor, report_delay)
+
+				self.sentences.extend(list(set(sentences)))
+
 			else:
-				self.train(
-					SentenceIterator(self.sentences), corpus_file, 
-					total_examples, total_words, epochs, 
-					start_alpha, end_alpha, word_count, 
-					queue_factor, report_delay)
+				self.update(keywords)
+
+
 		else:
 
-			
 			if compute_loss:
 				self.train(
 					# 20181130 LIN, Y.D. Train with all corpus
@@ -197,6 +207,7 @@ class Sec2Vec():
 
 class KeywordCorpusFactoryWord2VecMixin(Sec2Vec, Word2Vec, KeywordCorpusFactory): 
 
+	@assert_sentences
 	def __init__(
 		self, keywords, sentences, 
 		corpus_worker, corpus_chunksize, case_sensitive, 
@@ -240,6 +251,7 @@ class KeywordCorpusFactoryWord2VecMixin(Sec2Vec, Word2Vec, KeywordCorpusFactory)
 		
 class KeywordCorpusFactoryFasttextMixin(Sec2Vec, FastText, KeywordCorpusFactory):
 
+	@assert_sentences
 	def __init__(
 		self, keywords, sentences, corpus_file,
 		size, alpha, word_ngrams, min_n, max_n, bucket,
@@ -338,6 +350,7 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 
 class KeywordCorpusFactoryGloveMixin(Sec2Vec, KeywordCorpusFactory):
 
+	@assert_sentences
 	def __init__(
 		self, keywords, sentences, corpus_file, 
 		corpus_worker, corpus_chunksize, case_sensitive
@@ -401,6 +414,8 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		self.builddir = builddir
 		self.glove_dir = glove_dir
 
+		
+
 		if self.sentences:
 			
 			f = open('./{}/temp_glove_sentence.txt'.format(self.glove_dir), 'w+')
@@ -430,6 +445,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 
 	# 20181128 Hannah Chen, modify train_embed method
+	@assert_sentences
 	def train_embed(
 		self, keywords=None, sentences=None, 
 		# update=False, 
@@ -443,21 +459,28 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 				raise ValueError(
 					'sentences accpets list of str or list of tokens only.')
 
-			self.update(keywords, SentenceIterator(sentences))
-
 			if self.model:
-				self.model.build_vocab(SentenceIterator(sentences), update=True)
-				self.model.train(
-					sentences, 
-					total_examples=self.model.corpus_count,
-					epochs=epochs)
+
+				if sentences:
+
+					self.update(keywords, SentenceIterator(sentences))
+					self.model.build_vocab(SentenceIterator(sentences), update=True)
+					self.model.train(
+						sentences, 
+						total_examples=self.model.corpus_count,
+						epochs=epochs)
+					self.sentences.extend(list(set(sentences)))
+
+				else:
+					self.update(keywords)
 
 			else:
 
 				glove_vec_file = '{}/{}.txt'.format(self.glove_dir, self.save_file)
 
 				if not self.pre_trained_vec:
-					self.pre_trained_vec = self._load_pretrained_model('{}/{}.txt'.format(self.glove_dir ,self.save_file))
+					self.pre_trained_vec = \
+						self._load_pretrained_model('{}/{}.txt'.format(self.glove_dir ,self.save_file))
 			
 				new_model = Word2Vec(
 					SentenceIterator(sentences), 
@@ -466,7 +489,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 				new_model.build_vocab(
 					[list(self.pre_trained_vec.vocab.keys())], 
-					update=False)
+					update=True)
 					# update=update)
 				new_model.intersect_word2vec_format(
 					self.output_file, binary=False, lockf=1.0)
@@ -477,6 +500,15 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 				self.model = new_model
 				self.wv = new_model.wv
+
+				# 20181201 LIN, Y.D. FIX BUG
+				if sentences:
+					self.update(keywords, SentenceIterator(sentences))
+					self.sentences.extend(list(set(sentences)))
+				else:
+					self.update(keywords)
+
+
 				del new_model
 
 			self._cal_kv()
