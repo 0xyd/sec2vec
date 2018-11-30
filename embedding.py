@@ -269,7 +269,7 @@ class SecWord2Vec(KeywordCorpusFactoryWord2VecMixin):
 
 	def __init__(
 		self, keywords, sentences, 
-		corpus_worker=3, corpus_chunksize=256, case_sensitive=False, 
+		corpus_worker=3, corpus_chunksize=5000, case_sensitive=False, 
 		corpus_file=None, size=100, alpha=0.025, 
 		window=5, min_count=5, max_vocab_size=None, 
 		sample=0.001, seed=1, workers=cpu_count(), 
@@ -299,7 +299,7 @@ class SecFastText(KeywordCorpusFactoryFasttextMixin):
 		self, keywords, sentences, corpus_file=None,
 		size=100, alpha=0.025, word_ngrams=1, 
 		min_n=3, max_n=6, bucket=2000000,
-		corpus_worker=3, corpus_chunksize=256, case_sensitive=False,
+		corpus_worker=3, corpus_chunksize=5000, case_sensitive=False,
 		window=5, min_count=5, max_vocab_size=None,
 		sample=0.001, seed=1, workers=3, min_alpha=0.0001,
 		sg=0, hs=0, negative=5, 
@@ -365,11 +365,11 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 		# 20181128 Hannah Chen, modify class variables
 		self, keywords, sentences=None,
-		corpus_file=None, corpus_worker=3, corpus_chunksize=256, 
+		corpus_file=None, corpus_worker=3, corpus_chunksize=5000, 
 		case_sensitive=False, vocab_file='vocab.txt', save_file='vectors',
 		min_count=5, size=100, window=5, threads=3, iter=5, 
 		X_max=10, memory=4.0, pretrained_model_file=None, 
-		output_file='./glove/glove_vectors_gensim.vec',
+		output_file='glove_vectors_gensim.vec',
 		#20181229 arvis add variables
 		verbose=2, binary=2, cooccurrence_file='cooccurrence.bin',
 		cooccurrence_shuf_file='cooccurrence.shuf.bin' ,
@@ -415,15 +415,15 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		# assert self.sentences or self.corpus_file
 
 		if self.sentences:
+			
+			f = open('./{}/temp_glove_sentence.txt'.format(self.glove_dir), 'w+')
 
-			f = open('{}/temp_glove_sentence.txt'.format(self.glove_dir), 'w+')
-
-			# 20181129 Hannah Chen
-			for sentence in SentenceIterator(sentences):
+			for sentence in SentenceIterator(self.sentences):
 				f.write(' '.join(sentence))
 				f.write('\n')
 
 			self.corpus_file = 'temp_glove_sentence.txt'
+
 			f.close()
 
 		elif self.corpus_file:
@@ -431,6 +431,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			os.system('cp ./{} ./{}/'.format(self.corpus_file, self.glove_dir))
 			f = open('./{}'.format(self.corpus_file), 'r')
 			self.sentences = f.readlines()
+
 			
 		# 20181130 LIN, Y.D. Parent should be init at very beginning.
 		# super().__init__(
@@ -492,26 +493,23 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 		else:
 
-			#20181229 arvis add variables
-			#initializing shell command
-
 			# 20181130 LIN, Y.D. Update Naming
-			vocab_count_cmd = '{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {}' \
-							  .format(self.builddir, self.memory, self.vocab_file, self.verbose, self.window)
+			vocab_count_cmd = '{}/vocab_count -min-count {} -verbose {} '\
+								.format(self.builddir, self.min_count, self.verbose)
 
-			cooccur_cmd = '{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {}' \
-						  .format(self.builddir, self.memory, self.vocab_file, self.verbose, self.window)
+			cooccur_cmd = '{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {}'.format(
+				self.builddir, self.memory, self.vocab_file, self.verbose, self.window)
 
-			shuffle_cmd = '{}/shuffle -memory {} -verbose {}'\
-						  .format(self.builddir, self.memory, self.verbose)
+			shuffle_cmd = '{}/shuffle -memory {} -verbose {} '.format(
+				self.builddir, self.memory, self.verbose)
 
-			save_file_cmd = '{}/glove -save-file {} -threads {} -input-file {} \
-							-x-max {} -iter {} -vector-size {} -binary {} -vocab-file {} -verbose {}'\
-							.format(self.builddir, self.save_file, self.threads, self.cooccurrence_shuf_file,\
-									self.X_max, self.iter, self.size, self.binary, self.vocab_file, self.verbose)
+			save_file_cmd = '''{}/glove -save-file {} -threads {} -input-file {}
+							-x-max {} -iter {} -vector-size {} -binary {} -vocab-file {} -verbose {}'''.format(
+								self.builddir, self.save_file, self.threads, self.cooccurrence_shuf_file,\
+								self.X_max, self.iter, self.size, self.binary, self.vocab_file, self.verbose)
 
 			glove_command = [
-				('make', None , None, False, False),
+				# ('make', None , None, False, False),
 				(vocab_count_cmd, self.corpus_file, self.vocab_file, True, True),
 				(cooccur_cmd, self.corpus_file, self.cooccurrence_file, True, True),
 				(shuffle_cmd, self.cooccurrence_file, self.cooccurrence_shuf_file, True, True),
@@ -520,6 +518,32 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 			for command in glove_command:
 				self._run_subprocess_command(*command)
+
+			# step1_command = '{}/vocab_count -min-count {} -verbose {} '\
+			# 				 .format(self.builddir, self.min_count, self.verbose)
+
+
+			# step2_command = '{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {}'\
+			# 				.format(self.builddir, self.memory, self.vocab_file, self.verbose, self.window)
+			
+			# step3_command = '{}/shuffle -memory {} -verbose {} '\
+			# 				.format(self.builddir, self.memory, self.verbose)
+			
+			# step4_command ='{}/glove -save-file {} -threads {} -input-file {} \
+			# 				-x-max {} -iter {} -vector-size {} -binary {} -vocab-file {} -verbose {}'\
+			# 				.format(self.builddir, self.save_file, self.threads, self.cooccurrence_shuf_file,\
+			# 						self.X_max, self.iter, self.size, self.binary, self.vocab_file, self.verbose)
+			
+			# glove_command = [('make', None , None, False, False),
+			# 				(step1_command, self.corpus_file, self.vocab_file, True, True),
+			# 				(step2_command, self.corpus_file, self.cooccurrence_file, True, True),
+			# 				(step3_command, self.cooccurrence_file, self.cooccurrence_shuf_file, True, True),
+			# 				(step4_command, None, None, False, False)
+
+			# 				]
+
+			# for command in glove_command:
+			# 	self._run_subprocess_command(*command)
 
 			self._remove_temp_file()
 
@@ -539,10 +563,13 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		if input_enable == output_enable == True:
 			input_file = open(self.glove_dir + input_path)
 			output_file = open(self.glove_dir + output_path, 'wb')
-		
-			with Popen(shlex.split(command), stdin=input_file, stdout=output_file, cwd=self.glove_dir) as p:
-				p.wait()
-				output_file.flush()
+
+			with Popen(
+				shlex.split(command), stdin=input_file, 
+				stdout=PIPE, cwd=self.glove_dir) as p:
+				for l in p.stdout:
+					output_file.write(l)
+					output_file.flush()
 				output_file.close()
 
 		else:
@@ -552,5 +579,6 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 
 	def _remove_temp_file(self):
-		if self.corpus_file == 'temp_glove_sentence.txt':
-			subprocess.run(['rm','-rf',self.corpus_file],cwd=self.glove_dir)
+
+		if self.corpus_file:
+			os.remove('{}/{}'.format(self.glove_dir ,self.corpus_file))

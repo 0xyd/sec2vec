@@ -10,7 +10,7 @@ class SentenceIterator():
 
 	def __init__(self, sentences): 
 		self.iterable = (s for s in sentences)
-		
+
 		# 20181130 Hannah Chen, add length for iterable
 		self.length = sum(1 for _ in sentences)
 
@@ -133,7 +133,7 @@ class KeywordCorpusFactory():
 			self.kc[keyword] = set()
 			# self.kc[keyword] = []
 
-	def _create(self, keywords, sentences, chunksize=256):
+	def _create(self, keywords, sentences, chunksize=5000):
 
 		sentences_chunk = []
 		partition_size = chunksize // self.corpus_worker
@@ -184,7 +184,7 @@ class KeywordCorpusFactory():
 				# self.kc[keyword].extend(tokens)
 				# self.kc[keyword].append(tokens)
 
-	def create(self, sentences, chunksize=256):
+	def create(self, sentences, chunksize=5000):
 
 		keywords = list(self.kc.keys())
 
@@ -245,7 +245,7 @@ class KeywordCorpusFactory():
 	# 		else:
 	# 			self.kc[keyword] = []
 
-	def update(self, keywords=None, sentences=None, chunksize=256):
+	def update(self, keywords=None, sentences=None, chunksize=5000):
 
 		if keywords is None and sentences is None:
 			raise ValueError(
