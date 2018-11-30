@@ -91,23 +91,28 @@ class Sec2Vec():
 	# 20181130 LIN, Y.D. Move from KeywordCorpusFactory
 	def add_keyword_corpus(self, keyword, sentences):
 
-		if instance(sentences, list):
+		#20181130 
+		print(len(self.kc))
+		if isinstance(sentences, list):
 
 			if keyword in self.kc:
 
 				for s in sentences:
-					self.kc[keyword].add(s)
-					self.sentences = list(set(self.sentences.append(s)))
-					# self.sentences = self.sentences.append(s)
+
+						self.kc[keyword].add(s)
+						self.sentences.extend(sentences)
+						self.sentences = list(set(self.sentences))
+
 
 			else:
+				print(self.sentences)
 				self.kc[keyword] = set(sentences)
-				self.sentences = list(set(self.sentences.extend(sentences)))
-				# self.sentences = self.sentences.extend(sentences)
-
+				self.sentences.extend(sentences)
+				self.sentences = list(set(self.sentences))
 		else:
 			raise ValueError(
 					'sentences accepts list only.')
+
 
 
 	def train_embed(
@@ -338,7 +343,7 @@ class KeywordCorpusFactoryGloveMixin(Sec2Vec, KeywordCorpusFactory):
 		self.kv = dict(((keyword, []) for keyword in self.kc.keys()))
 		self.keyword_count = dict(((keyword, 0) for keyword in self.kc.keys()))
 		self.corpus_chunksize = corpus_chunksize
-
+		
 
 #11/24 add 
 class SecGloVe(KeywordCorpusFactoryGloveMixin):
@@ -393,6 +398,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			f = open('./{}/temp_glove_sentence.txt'.format(self.glove_dir), 'w+')
 
 			for sentence in SentenceIterator(self.sentences):
+				
 				f.write(' '.join(sentence))
 				f.write('\n')
 
