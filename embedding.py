@@ -91,21 +91,18 @@ class Sec2Vec():
 	# 20181130 LIN, Y.D. Move from KeywordCorpusFactory
 	def add_keyword_corpus(self, keyword, sentences):
 
-		#20181130 
-		print(len(self.kc))
 		if isinstance(sentences, list):
 
 			if keyword in self.kc:
 
 				for s in sentences:
 
-						self.kc[keyword].add(s)
-						self.sentences.extend(sentences)
-						self.sentences = list(set(self.sentences))
-
+					self.kc[keyword].add(s)
+					self.sentences.extend(sentences)
+					self.sentences = list(set(self.sentences))
 
 			else:
-				print(self.sentences)
+				
 				self.kc[keyword] = set(sentences)
 				self.sentences.extend(sentences)
 				self.sentences = list(set(self.sentences))
