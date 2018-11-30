@@ -1,3 +1,5 @@
+import pytest
+
 from preprocessing import KeywordCorpus
 from preprocessing import KeywordCorpusFactory
 from preprocessing import KeywordCorpusIterator
@@ -45,9 +47,21 @@ class TestKeywordCorpusIterator():
 class TestKeywordCorpusFactory():
 
 	def test_init(self):
+
 		keywords = ['test', 'test again']
 		kcf = KeywordCorpusFactory(keywords)
 		assert True
+
+		del kcf;
+
+		a_keyword = 'a keyword'
+		with pytest.raises(Exception):
+			kcf = KeywordCorpusFactory(a_keyword)
+			
+		keywords = [1,2,3,4,5]
+		with pytest.raises(Exception):
+			kcf = KeywordCorpusFactory(keywords)
+
 
 	def test_keyword_corpus(self):
 
@@ -76,6 +90,24 @@ class TestKeywordCorpusFactory():
 				assert False
 		assert True
 
+	def test_add_keyword_corpus(self):
+
+		start_keywords = ['not', 'so', 'important']
+		keyword = 'Hello'
+		corpus  = ['This is a Hello World Sample.', 'This is nothing']
+		kcf = KeywordCorpusFactory(start_keywords)
+		kcf.add_keyword_corpus(keyword, corpus)
+		assert kcf.kc['Hello'] == set(corpus)
+
+		new_corpus = ['This a new hello word sample']
+		kcf.add_keyword_corpus(keyword, new_corpus)
+		assert kcf.kc['Hello'] == set(corpus + new_corpus)
+
+		# Test for list input which should be illegal
+		with pytest.raises(Exception):
+			kcf.add_keyword_corpus(['Hi again'], corpus)
+
+
 	def test_update(self):
 
 		first_keywords = ['Hello', 'World']
@@ -92,8 +124,6 @@ class TestKeywordCorpusFactory():
 		]
 		kcf.update(sentences=second_sentences)
 
-		print("keyword_corpus['Hello']:")
-		print(keyword_corpus['Hello'])
 		assert keyword_corpus['Hello'] == set([
 			'Hello World is our first program',
 			'Hello World is our last program',
@@ -106,7 +136,7 @@ class TestKeywordCorpusFactory():
 			'Hello World is our last program',
 			'Hello World is a fantastic sample',
 			'Hello World is a fantastic example'
-		])		
+		])
 
 		# assert keyword_corpus['Hello'] == [
 		# 		['Hello', 'World', 'is', 'our', 'first', 'program'],

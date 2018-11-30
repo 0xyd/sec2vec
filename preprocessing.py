@@ -102,9 +102,27 @@ class KeywordCorpusFactory():
 		self.case_sensitive = case_sensitive
 		self.corpus_worker = worker
 
+		# 20181130 LIN, Y.D. Type check
+		if not isinstance(keywords, list):
+			raise ValueError('keywords should be a list of string.')
+
 		for keyword in keywords:
+			if not isinstance(keyword, str):
+				raise ValueError('The element in keywords list must be string.')
 			self.kc[keyword] = set()
 			# self.kc[keyword] = []
+
+	# 20181130 LIN, Y.D. Allow users to customize keyword and its corresponding corpus.
+	def add_keyword_corpus(self, keyword, sentences):
+
+		if keyword in self.kc:
+
+			for s in sentences:
+				self.kc[keyword].add(s)
+
+		else:
+			self.kc[keyword] = set(sentences)
+
 
 	def _create(self, keywords, sentences, chunksize=256):
 
