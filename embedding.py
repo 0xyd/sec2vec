@@ -111,6 +111,17 @@ class Sec2Vec():
 				self.kv[keyword] = kv
 				self.keyword_count[keyword] += token_count
 
+	# 20181130 LIN, Y.D. Move from KeywordCorpusFactory
+	def add_keyword_corpus(self, keyword, sentences):
+
+		if keyword in self.kc:
+
+			for s in sentences:
+				self.kc[keyword].add(s)
+
+		else:
+			self.kc[keyword] = set(sentences)
+
 	def train_embed(
 		self, keywords=None, sentences=None, corpus_file=None, update=False,
 		total_examples=None, total_words=None,  epochs=None, 

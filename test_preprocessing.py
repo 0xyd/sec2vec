@@ -90,22 +90,22 @@ class TestKeywordCorpusFactory():
 				assert False
 		assert True
 
-	def test_add_keyword_corpus(self):
+	# def test_add_keyword_corpus(self):
 
-		start_keywords = ['not', 'so', 'important']
-		keyword = 'Hello'
-		corpus  = ['This is a Hello World Sample.', 'This is nothing']
-		kcf = KeywordCorpusFactory(start_keywords)
-		kcf.add_keyword_corpus(keyword, corpus)
-		assert kcf.kc['Hello'] == set(corpus)
+	# 	start_keywords = ['not', 'so', 'important']
+	# 	keyword = 'Hello'
+	# 	corpus  = ['This is a Hello World Sample.', 'This is nothing']
+	# 	kcf = KeywordCorpusFactory(start_keywords)
+	# 	kcf.add_keyword_corpus(keyword, corpus)
+	# 	assert kcf.kc['Hello'] == set(corpus)
 
-		new_corpus = ['This a new hello word sample']
-		kcf.add_keyword_corpus(keyword, new_corpus)
-		assert kcf.kc['Hello'] == set(corpus + new_corpus)
+	# 	new_corpus = ['This a new hello word sample']
+	# 	kcf.add_keyword_corpus(keyword, new_corpus)
+	# 	assert kcf.kc['Hello'] == set(corpus + new_corpus)
 
-		# Test for list input which should be illegal
-		with pytest.raises(Exception):
-			kcf.add_keyword_corpus(['Hi again'], corpus)
+	# 	# Test for list input which should be illegal
+	# 	with pytest.raises(Exception):
+	# 		kcf.add_keyword_corpus(['Hi again'], corpus)
 
 
 	def test_update(self):

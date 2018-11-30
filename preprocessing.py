@@ -140,15 +140,15 @@ class KeywordCorpusFactory():
 			# self.kc[keyword] = []
 
 	# 20181130 LIN, Y.D. Allow users to customize keyword and its corresponding corpus.
-	def add_keyword_corpus(self, keyword, sentences):
+	# def add_keyword_corpus(self, keyword, sentences):
 
-		if keyword in self.kc:
+	# 	if keyword in self.kc:
 
-			for s in sentences:
-				self.kc[keyword].add(s)
+	# 		for s in sentences:
+	# 			self.kc[keyword].add(s)
 
-		else:
-			self.kc[keyword] = set(sentences)
+	# 	else:
+	# 		self.kc[keyword] = set(sentences)
 
 
 	def _create(self, keywords, sentences, chunksize=256):
