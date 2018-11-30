@@ -8,7 +8,7 @@ from queue import Queue
 import torch
 import torch.nn as nn
 import numpy  as np
-import pandas as pd
+# import pandas as pd
 from tqdm import tqdm
 
 
@@ -187,10 +187,10 @@ class CNNInfusion():
 		num_output_words = len(word_index)
 		num_keywords = len(embeddings)
 		
-		for epoch in tqdm_notebook(range(self.epochs)):
+		for epoch in tqdm(range(self.epochs)):
 			
 			batch = []
-			for keyword_index, (keyword, data) in tqdm_notebook(
+			for keyword_index, (keyword, data) in tqdm(
 				enumerate(embeddings.items()), total=num_keywords):
 				
 				tokens = set(
@@ -201,12 +201,12 @@ class CNNInfusion():
 				batch.append((tokens, tokens_index, data['vector']))
 				
 				if len(batch) == self.batch_size:
-					
+
 					feature_map = torch.tensor(
 						np.array([b[2] for b in batch])).to(
 							self.device, dtype=torch.float32)
 					lbls = torch.tensor(
-						np.zeros((batch_size, num_output_words))).to(
+						np.zeros((self.batch_size, num_output_words))).to(
 							self.device, dtype=torch.float32)
 			
 					for i, index in enumerate((b[1] for b in batch)):
@@ -225,7 +225,7 @@ class CNNInfusion():
 					batch = []
 		
 	def train(self, word_batch, embeddings, channels, seed=42,
-			  input_embedding_size=300, output_embedding_size=300, learning_rate=0.001):
+			  input_embedding_size=100, output_embedding_size=100, learning_rate=0.001):
 		'''
 		'''
 		
@@ -242,7 +242,7 @@ class CNNInfusion():
 
 		word_index = dict()
 		
-		for w_idx, w in tqdm_notebook(
+		for w_idx, w in tqdm(
 			enumerate(total_words), total=total_words_num):
 			
 			word_index[w] = w_idx % word_batch
@@ -258,7 +258,7 @@ class CNNInfusion():
 			
 				if '<unk>' not in word_index: word_index['<unk>'] = len(word_index)
 				num_words = len(word_index)
-		
+
 				cnn = ConvNet(num_words, num_embeddings, channels,
 							  input_embedding_size, output_embedding_size).to(self.device)
 			
@@ -271,7 +271,10 @@ class CNNInfusion():
 				
 				del cnn; gc.collect()
 				del word_index; gc.collect()
-				torch._C._cuda_emptyCache()
+
+
+				if torch.cuda.is_available():
+					torch._C._cuda_emptyCache()
 				
 				word_index = dict()
 				
