@@ -136,14 +136,23 @@ class KeywordCorpusFactory():
 
 				partitions = []
 
-				for i in range(self.corpus_worker):
+				for j in range(self.corpus_worker):
 
-					if i == self.corpus_worker-1:
+					if j == self.corpus_worker-1:
 						partitions.append(
-							sentences_chunk[i*partition_size:])
+							sentences_chunk[j*partition_size:])
 					else:
 						partitions.append(
-							sentences_chunk[i*partition_size:(i+1)*partition_size])
+							sentences_chunk[j*partition_size:(j+1)*partition_size])	
+
+				# for i in range(self.corpus_worker):
+
+				# 	if i == self.corpus_worker-1:
+				# 		partitions.append(
+				# 			sentences_chunk[i*partition_size:])
+				# 	else:
+				# 		partitions.append(
+				# 			sentences_chunk[i*partition_size:(i+1)*partition_size])
 
 				new_corpus_list = corpus_pool.starmap(
 					mp_extract_keywords, 
@@ -167,7 +176,9 @@ class KeywordCorpusFactory():
 
 		if sentences_chunk:
 
-			new_corpus = mp_extract_keywords(keywords, sentences_chunk)
+			new_corpus = mp_extract_keywords(
+				keywords, sentences_chunk, self.case_sensitive)
+
 			for keyword, sentences in new_corpus.items():
 				self.kc[keyword] = \
 					self.kc[keyword].union(sentences)
