@@ -357,7 +357,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 		# 20181130 LIN, Y.D.
 		super().__init__(
-			self, keywords, sentences, corpus_file, 
+			keywords, sentences, corpus_file, 
 			corpus_worker, corpus_chunksize, case_sensitive)
 
 		# self.keywords = keywords
@@ -391,15 +391,16 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 
 		# assert self.sentences or self.corpus_file
 
-		if self.sentences and not self.corpus_file:
+		if self.sentences:
 			
 			f = open('./{}/temp_glove_sentence.txt'.format(self.glove_dir), 'w+')
 
-			for sentence in SentenceIterator(sentences):
+			for sentence in SentenceIterator(self.sentences):
 				f.write(' '.join(sentence))
 				f.write('\n')
 
 			self.corpus_file = 'temp_glove_sentence.txt'
+
 			f.close()
 
 		elif self.corpus_file:
@@ -407,6 +408,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			os.system('cp ./{} ./{}/'.format(self.corpus_file, self.glove_dir))
 			f = open('./{}'.format(self.corpus_file), 'r')
 			self.sentences = f.readlines()
+
 			
 		# 20181130 LIN, Y.D. Parent should be init at very beginning.
 		# super().__init__(
@@ -470,22 +472,22 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			#initializing shell command
 
 			# 20181130 LIN, Y.D. Update Naming
-			vocab_count_cmd = '{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {}'
-							  .format(self.builddir, self.memory, self.vocab_file, self.verbose, self.window)
+			vocab_count_cmd = '{}/vocab_count -min-count {} -verbose {} '\
+								.format(self.builddir, self.min_count, self.verbose)
 
-			cooccur_cmd = '{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {}'
-						  .format(self.builddir, self.memory, self.vocab_file, self.verbose, self.window)
+			cooccur_cmd = '{}/cooccur -memory {} -vocab-file {} -verbose {} -window-size {}'.format(
+				self.builddir, self.memory, self.vocab_file, self.verbose, self.window)
 
-			shuffle_cmd = '{}/shuffle -memory {} -verbose {} '\
-						  .format(self.builddir, self.memory, self.verbose)
+			shuffle_cmd = '{}/shuffle -memory {} -verbose {} '.format(
+				self.builddir, self.memory, self.verbose)
 
-			save_file_cmd = '{}/glove -save-file {} -threads {} -input-file {} \
-							-x-max {} -iter {} -vector-size {} -binary {} -vocab-file {} -verbose {}'\
-							.format(self.builddir, self.save_file, self.threads, self.cooccurrence_shuf_file,\
-									self.X_max, self.iter, self.size, self.binary, self.vocab_file, self.verbose)
+			save_file_cmd = '''{}/glove -save-file {} -threads {} -input-file {}
+							-x-max {} -iter {} -vector-size {} -binary {} -vocab-file {} -verbose {}'''.format(
+								self.builddir, self.save_file, self.threads, self.cooccurrence_shuf_file,\
+								self.X_max, self.iter, self.size, self.binary, self.vocab_file, self.verbose)
 
 			glove_command = [
-				('make', None , None, False, False),
+				# ('make', None , None, False, False),
 				(vocab_count_cmd, self.corpus_file, self.vocab_file, True, True),
 				(cooccur_cmd, self.corpus_file, self.cooccurrence_file, True, True),
 				(shuffle_cmd, self.cooccurrence_file, self.cooccurrence_shuf_file, True, True),
@@ -519,7 +521,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 			# 				]
 
 			# for command in glove_command:
-			# 	self.run_subprocess_command(*command)
+			# 	self._run_subprocess_command(*command)
 
 			self.pre_trained_vec = self._load_glove_vec('{}/{}.txt'.format(self.glove_dir, self.save_file))
 			self.wv = self.pre_trained_vec.wv
@@ -536,10 +538,13 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 		if input_enable == output_enable == True:
 			input_file = open(self.glove_dir + input_path)
 			output_file = open(self.glove_dir + output_path, 'wb')
-		
-			with Popen(shlex.split(command), stdin=input_file, stdout=output_file, cwd=self.glove_dir) as p:
-				p.wait()
-				output_file.flush()
+
+			with Popen(
+				shlex.split(command), stdin=input_file, 
+				stdout=PIPE, cwd=self.glove_dir) as p:
+				for l in p.stdout:
+					output_file.write(l)
+					output_file.flush()
 				output_file.close()
 
 		else:
@@ -548,7 +553,7 @@ class SecGloVe(KeywordCorpusFactoryGloveMixin):
 					logging.info(line) 
 
 
-	def remove_temp_file(self):
+	def _remove_temp_file(self):
 
 		if self.corpus_file:
 			os.remove('{}/{}'.format(self.glove_dir ,self.corpus_file))
