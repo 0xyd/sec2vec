@@ -118,9 +118,12 @@ class Sec2Vec():
 
 			for s in sentences:
 				self.kc[keyword].add(s)
+				self.sentences.append(s)
 
 		else:
 			self.kc[keyword] = set(sentences)
+			self.sentences.extend(sentences)
+
 
 	def train_embed(
 		self, keywords=None, sentences=None, corpus_file=None, update=False,
