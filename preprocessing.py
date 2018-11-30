@@ -5,6 +5,8 @@ from multiprocessing import Pool, cpu_count
 
 from flashtext import KeywordProcessor
 
+from embedding import SentenceIterator
+
 
 # def mp_extract_keywords(
 # 	keywords, sentences, case_sensitive=False):
@@ -161,7 +163,10 @@ class KeywordCorpusFactory():
 	def create(self, sentences, chunksize=256):
 
 		keywords = list(self.kc.keys())
-		self._create(keywords, sentences, chunksize=256)
+
+		# 20181130 Hannah Chen, create with sentence iterator
+		self._create(keywords, SentenceIterator(sentences), chunksize=chunksize)
+		# self._create(keywords, sentences, chunksize=256)
 
 		# 20181129 Hannah Chen, return error if keyword corpus is empty
 		if all(len(value) == 0 for value in self.kc.values()):
