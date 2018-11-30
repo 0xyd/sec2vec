@@ -114,7 +114,7 @@ class Sec2Vec():
 	# 20181130 LIN, Y.D. Move from KeywordCorpusFactory
 	def add_keyword_corpus(self, keyword, sentences):
 
-		if instance(sentences, list):
+		if isinstance(sentences, list):
 
 			if keyword in self.kc:
 
