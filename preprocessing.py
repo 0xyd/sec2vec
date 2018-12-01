@@ -11,8 +11,9 @@ class SentenceIterator():
 	def __init__(self, sentences): 
 		self.iterable = (s for s in sentences)
 
+		# 20181201 LIN, Y.D. Bug. Cause Iterable exhausted.
 		# 20181130 Hannah Chen, add length for iterable
-		self.length = sum(1 for _ in sentences)
+		# self.length = sum(1 for _ in sentences)
 
 	def __iter__(self): return self
 
@@ -28,48 +29,10 @@ class SentenceIterator():
 			return ValueError(
 				'Only String or list of string are acceptable.')
 
+	# 20182101 LIN, Y.D. Bug
 	# 20181130 Hannah Chen, add length for iterable
-	def __len__(self):
-		return self.length
-
-# def mp_extract_keywords(
-# 	keywords, sentences, case_sensitive=False):
-
-# 	corpus = dict()
-# 	kp = KeywordProcessor(case_sensitive=case_sensitive)
-
-# 	for keyword in keywords:
-
-# 		corpus[keyword] = set()
-# 		kp.add_keyword(keyword, ' ')
-
-# 		for sentence in sentences:
-
-# 			if isinstance(sentence, list):
-# 				sentence = ' '.join(sentence)
-
-# 			# 20181123 LIN, Y.D. Remove Duplicates
-# 			if sentence in corpus[keyword]:
-# 				continue
-
-# 			keywords_found = kp.extract_keywords(sentence)
-
-# 			if keywords_found:
-
-# 				# 20181123 LIN, Y.D. Reserved keywords.
-# 				corpus[keyword].add(sentence)
-
-# 				# tokens = list(filter(
-# 				# 	lambda s: s if len(s) > 0 else None, sentence.split(' ')))
-
-# 				# tokens = list(filter(
-# 				# 	lambda s: s if len(s) > 0 else None, 
-# 				# 	kp.replace_keywords(sentence).split(' ')))
-# 				# corpus[keyword].append(tokens)
-
-# 		kp.remove_keyword(keyword)
-
-# 	return corpus
+	# def __len__(self):
+	# 	return self.length
 
 # 20181128 Hannah Chen, Optimize performance
 def mp_extract_keywords(keywords, sentences, case_sensitive=False):
@@ -157,7 +120,13 @@ class KeywordCorpusFactory():
 		partition_size = chunksize // self.corpus_worker
 		corpus_pool = Pool(self.corpus_worker)
 
-		for i, sentence in tqdm(enumerate(sentences), total=sentences.__len__()):
+		# 20181130 LIN, Y.D.
+		if not isinstance(sentences, SentenceIterator):
+			sentences = SentenceIterator(sentences)
+
+		# 20181201 LIN, Y.D. BUG FIX: bug for generator
+		for i, sentence in enumerate(sentences):
+		# for i, sentence in tqdm(enumerate(sentences), total=sentences.__len__()):
 
 			if i % (chunksize-1) == 0 and i > 0:
 
@@ -172,15 +141,6 @@ class KeywordCorpusFactory():
 						partitions.append(
 							sentences_chunk[j*partition_size:(j+1)*partition_size])	
 
-				# for i in range(self.corpus_worker):
-
-				# 	if i == self.corpus_worker-1:
-				# 		partitions.append(
-				# 			sentences_chunk[i*partition_size:])
-				# 	else:
-				# 		partitions.append(
-				# 			sentences_chunk[i*partition_size:(i+1)*partition_size])
-
 				new_corpus_list = corpus_pool.starmap(
 					mp_extract_keywords, 
 					((keywords, partition, self.case_sensitive) for partition in partitions))
@@ -189,10 +149,6 @@ class KeywordCorpusFactory():
 					for keyword, sentences in new_corpus.items():
 						self.kc[keyword] = \
 							self.kc[keyword].union(sentences)
-
-					# for keyword, tokens in new_corpus.items():
-					# 	self.kc[keyword].extend(tokens)
-						# self.kc[keyword].append(tokens)
 
 				sentences_chunk = []
 
@@ -210,16 +166,12 @@ class KeywordCorpusFactory():
 				self.kc[keyword] = \
 					self.kc[keyword].union(sentences)
 
-				# self.kc[keyword].extend(tokens)
-				# self.kc[keyword].append(tokens)
-
 	def create(self, sentences, chunksize=5000):
 
 		keywords = list(self.kc.keys())
 
 		# 20181130 Hannah Chen, create with sentence iterator
 		self._create(keywords, sentences, chunksize=chunksize)
-		# self._create(keywords, sentences, chunksize=256)
 
 		# 20181129 Hannah Chen, return error if keyword corpus is empty
 		# if all(len(value) == 0 for value in self.kc.values()):
@@ -227,54 +179,9 @@ class KeywordCorpusFactory():
 
 		return self.kc
 
-		# for i, sentence in enumerate(sentences):
-
-		# 	if i % (chunksize-1) == 0 and i > 0:
-
-		# 		partitions = []
-
-		# 		for i in range(self.corpus_worker):
-
-		# 			if i == self.corpus_worker-1:
-		# 				partitions.append(
-		# 					sentences_chunk[i*partition_size:])
-		# 			else:
-		# 				partitions.append(
-		# 					sentences_chunk[i*partition_size:(i+1)*partition_size])
-
-		# 		new_corpus_list = corpus_pool.starmap(
-		# 			mp_extract_keywords, 
-		# 			((keywords, partition, self.case_sensitive) for partition in partitions))
-
-		# 		for new_corpus in new_corpus_list:
-		# 			for keyword, tokens in new_corpus.items():
-		# 				self.kc[keyword].append(tokens)
-
-		# 		sentences_chunk = []
-
-		# 	else:
-		# 		sentences_chunk.append(sentence)
-
-		# corpus_pool.close()
-
-		# if sentences_chunk:
-
-		# 	new_corpus = mp_extract_keywords(keywords, sentences_chunk)
-		# 	for keyword, tokens in new_corpus.items():
-		# 		self.kc[keyword].append(tokens)
-
-		# return self.kc
-
-
-	# def update_keywords(self, keywords):
-
-	# 	for keyword in keywords:
-	# 		if keyword in self.kc:
-	# 			raise ValueError("Keyword {} is exist already".format(keyword))
-	# 		else:
-	# 			self.kc[keyword] = []
-
 	def update(self, keywords=None, sentences=None, chunksize=5000):
+		'''
+		'''
 
 		if keywords is None and sentences is None:
 			raise ValueError(
@@ -283,6 +190,7 @@ class KeywordCorpusFactory():
 			self.create(sentences, chunksize)
 
 		if keywords:
+
 			for keyword in keywords:
 				if keyword in self.kc:
 					raise ValueError("Keyword {} is exist already".format(keyword))
@@ -290,8 +198,8 @@ class KeywordCorpusFactory():
 					self.kc[keyword] = set()
 
 			# Retrieve old tokens and assemble them to sentences.
-			sentences_gen = (
-				sentences for corpus in self.kc.values() 
-					for sentences in corpus)
+			self._create(
+				keywords, 
+				[s for c in self.kc.values() for s in c],
+				chunksize)
 			
-			self._create(keywords, sentences_gen, chunksize)
