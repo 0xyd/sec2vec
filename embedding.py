@@ -111,7 +111,7 @@ class Sec2Vec():
 					self.sentences = list(set(self.sentences))
 
 			else:
-				
+
 				self.kc[keyword] = set(sentences)
 				self.sentences.extend(sentences)
 				self.sentences = list(set(self.sentences))

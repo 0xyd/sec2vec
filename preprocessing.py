@@ -114,7 +114,7 @@ class KeywordCorpusFactory():
 	# 		self.kc[keyword] = set(sentences)
 
 
-	def _create(self, keywords, sentences, chunksize=256):
+	def _create(self, keywords, sentences, chunksize=5000):
 
 		sentences_chunk = []
 		partition_size = chunksize // self.corpus_worker
